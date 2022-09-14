@@ -123,7 +123,8 @@ func (rh *RouteHandler) SetupRoutes() {
 		} else {
 			// extended build
 			ext.SetupMetricsRoutes(rh.c.Config, rh.c.Router, rh.c.StoreController, rh.c.Log)
-			ext.SetupSearchRoutes(rh.c.Config, rh.c.Router, rh.c.StoreController, rh.c.Log)
+			ext.SetupSearchRoutes(rh.c.Config, rh.c.Router, rh.c.StoreController,
+				rh.c.MetaStore, rh.c.Log)
 		}
 	}
 }

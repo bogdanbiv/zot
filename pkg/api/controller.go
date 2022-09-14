@@ -24,6 +24,7 @@ import (
 	"zotregistry.io/zot/pkg/extensions/lint"
 	"zotregistry.io/zot/pkg/extensions/monitoring"
 	"zotregistry.io/zot/pkg/log"
+	"zotregistry.io/zot/pkg/meta" // MetadataStore   meta.MetadataStore
 	"zotregistry.io/zot/pkg/scheduler"
 	"zotregistry.io/zot/pkg/storage"
 	"zotregistry.io/zot/pkg/storage/local"
@@ -37,6 +38,7 @@ const (
 type Controller struct {
 	Config          *config.Config
 	Router          *mux.Router
+	MetaStore       *meta.MetadataStore
 	StoreController storage.StoreController
 	Log             log.Logger
 	Audit           *log.Logger
@@ -238,10 +240,19 @@ func (c *Controller) Run(reloadCtx context.Context) error {
 			server.TLSConfig.ClientCAs = caCertPool
 		}
 
+		c.MetaStore = c.CreateMetadataDatabaseDriver(c.Config, c.Log)
+
 		return server.ServeTLS(listener, c.Config.HTTP.TLS.Cert, c.Config.HTTP.TLS.Key)
 	}
 
 	return server.Serve(listener)
+}
+
+func (c *Controller) CreateMetadataDatabaseDriver(cfg *config.Config,
+	log log.Logger,
+) *meta.MetadataStore {
+	metastore, _ := meta.NewBaseMetaDB(*cfg.Extensions.Metadata, log)
+	return &metastore
 }
 
 func (c *Controller) InitImageStore(reloadCtx context.Context) error {

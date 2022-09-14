@@ -3,11 +3,14 @@ package storage
 import (
 	"fmt"
 	"strings"
+
+	"zotregistry.io/zot/pkg/meta"
 )
 
 type StoreController struct {
-	DefaultStore ImageStore
-	SubStore     map[string]ImageStore
+	DefaultStore  ImageStore
+	SubStore      map[string]ImageStore
+	MetadataStore meta.MetadataStore
 }
 
 // BlobUpload models and upload request.

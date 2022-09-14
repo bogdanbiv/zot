@@ -24,6 +24,7 @@ import (
 	digestinfo "zotregistry.io/zot/pkg/extensions/search/digest"
 	"zotregistry.io/zot/pkg/extensions/search/gql_generated"
 	"zotregistry.io/zot/pkg/log" // nolint: gci
+	"zotregistry.io/zot/pkg/meta"
 	localCtx "zotregistry.io/zot/pkg/requestcontext"
 	"zotregistry.io/zot/pkg/storage"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
@@ -32,16 +33,23 @@ import (
 type Resolver struct {
 	cveInfo         cveinfo.CveInfo
 	storeController storage.StoreController
+	metadata        *meta.MetadataStore
 	digestInfo      *digestinfo.DigestInfo
 	log             log.Logger
 }
 
 // GetResolverConfig ...
-func GetResolverConfig(log log.Logger, storeController storage.StoreController, cveInfo cveinfo.CveInfo,
+func GetResolverConfig(log log.Logger, storeController storage.StoreController,
+	cveInfo cveinfo.CveInfo, metadata *meta.MetadataStore,
 ) gql_generated.Config {
 	digestInfo := digestinfo.NewDigestInfo(storeController, log)
 
-	resConfig := &Resolver{cveInfo: cveInfo, storeController: storeController, digestInfo: digestInfo, log: log}
+	resConfig := &Resolver{cveInfo: cveInfo,
+		storeController: storeController,
+		digestInfo:      digestInfo,
+		log:             log,
+		metadata:        metadata,
+	}
 
 	return gql_generated.Config{
 		Resolvers: resConfig, Directives: gql_generated.DirectiveRoot{},
@@ -808,4 +816,39 @@ func extractImageDetails(
 	}
 
 	return digest, &manifest, &imageConfig, nil
+}
+
+func getAccessContext(ctx context.Context) localCtx.AccessControlContext {
+	authzCtxKey := localCtx.GetContextKey()
+	if authCtx := ctx.Value(authzCtxKey); authCtx != nil {
+		acCtx, _ := authCtx.(localCtx.AccessControlContext)
+		// acCtx.Username = "bob"
+		return acCtx
+	}
+
+	// anonymous / default is the empty access control ctx
+	return localCtx.AccessControlContext{
+		IsAdmin:  false,
+		Username: "",
+	}
+}
+
+func filterRepos(acCtx localCtx.AccessControlContext, repoList []string) []string {
+	var availableRepos []string
+
+	for _, repoName := range repoList {
+		if acCtx.IsAdmin || matchesRepo(acCtx.GlobPatterns, repoName) {
+			availableRepos = append(availableRepos, repoName)
+		}
+	}
+
+	return availableRepos
+}
+
+func safeDerefferencing[T any](pointer *T, defaultVal T) T {
+	if pointer != nil {
+		return *pointer
+	}
+
+	return defaultVal
 }

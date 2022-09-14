@@ -37,6 +37,7 @@ import (
 	"zotregistry.io/zot/pkg/log"
 	"zotregistry.io/zot/pkg/storage"
 	"zotregistry.io/zot/pkg/storage/local"
+	storConstants "zotregistry.io/zot/pkg/storage/constants"
 	. "zotregistry.io/zot/pkg/test"
 	"zotregistry.io/zot/pkg/test/mocks"
 )
@@ -1027,10 +1028,10 @@ func TestUtilsMethod(t *testing.T) {
 
 		metrics := monitoring.NewMetricsServer(false, log)
 		defaultStore := local.NewImageStore(rootDir, false,
-			storage.DefaultGCDelay, false, false, log, metrics, nil)
+			storConstants.DefaultGCDelay, false, false, log, metrics, nil)
 
 		subStore := local.NewImageStore(subRootDir, false,
-			storage.DefaultGCDelay, false, false, log, metrics, nil)
+			storConstants.DefaultGCDelay, false, false, log, metrics, nil)
 
 		subStoreMap := make(map[string]storage.ImageStore)
 

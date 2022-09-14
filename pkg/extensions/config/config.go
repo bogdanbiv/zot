@@ -3,15 +3,16 @@ package config
 import (
 	"time"
 
-	"zotregistry.io/zot/pkg/extensions/sync"
+	msConfig "zotregistry.io/zot/pkg/meta/config"
 )
 
 type ExtensionConfig struct {
-	Search  *SearchConfig
-	Sync    *sync.Config
-	Metrics *MetricsConfig
-	Scrub   *ScrubConfig
-	Lint    *LintConfig
+	Search   *SearchConfig
+	Sync     *SyncConfig
+	Metrics  *MetricsConfig
+	Scrub    *ScrubConfig
+	Lint     *LintConfig
+	Metadata *msConfig.MetadataStoreConfig
 }
 
 type LintConfig struct {
@@ -41,4 +42,46 @@ type PrometheusConfig struct {
 type ScrubConfig struct {
 	Enable   *bool
 	Interval time.Duration
+}
+
+type UIConfig struct {
+	Enable *bool
+}
+
+// key is registry address.
+type CredentialsFile map[string]Credentials
+
+type Credentials struct {
+	Username string
+	Password string
+}
+
+type SyncConfig struct {
+	Enable          *bool
+	CredentialsFile string
+	Registries      []RegistryConfig
+}
+
+type RegistryConfig struct {
+	URLs         []string
+	PollInterval time.Duration
+	Content      []Content
+	TLSVerify    *bool
+	OnDemand     bool
+	CertDir      string
+	MaxRetries   *int
+	RetryDelay   *time.Duration
+	OnlySigned   *bool
+}
+
+type Content struct {
+	Prefix      string
+	Tags        *Tags
+	Destination string `mapstructure:",omitempty"`
+	StripPrefix bool
+}
+
+type Tags struct {
+	Regex  *string
+	Semver *bool
 }
