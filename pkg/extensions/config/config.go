@@ -3,7 +3,7 @@ package config
 import (
 	"time"
 
-	"zotregistry.io/zot/pkg/extensions/config/sync"
+	syncconf "zotregistry.io/zot/pkg/extensions/config/sync"
 )
 
 // BaseConfig has params applicable to all extensions.
@@ -13,7 +13,7 @@ type BaseConfig struct {
 
 type ExtensionConfig struct {
 	Search  *SearchConfig
-	Sync    *sync.Config
+	Sync    *syncconf.Config
 	Metrics *MetricsConfig
 	Scrub   *ScrubConfig
 	Lint    *LintConfig

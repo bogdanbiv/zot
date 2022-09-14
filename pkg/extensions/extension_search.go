@@ -159,7 +159,8 @@ func addSearchSecurityHeaders(h http.Handler) http.HandlerFunc { //nolint:varnam
 	}
 }
 
-func SetupSearchRoutes(config *config.Config, router *mux.Router, storeController storage.StoreController,
+func SetupSearchRoutes(config *config.Config, router *mux.Router,
+	storeController storage.StoreController,
 	repoDB repodb.RepoDB, cveInfo CveInfo, log log.Logger,
 ) {
 	log.Info().Msg("setting up search routes")

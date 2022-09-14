@@ -150,7 +150,6 @@ type LayerSummary struct {
 	Score *int `json:"Score"`
 }
 
-// Details about a specific version of an image for a certain operating system and architecture.
 type ManifestSummary struct {
 	// Digest of the manifest file associated with this image
 	Digest *string `json:"Digest"`
@@ -171,23 +170,6 @@ type ManifestSummary struct {
 	History []*LayerHistory `json:"History"`
 	// Short summary of the identified CVEs
 	Vulnerabilities *ImageVulnerabilitySummary `json:"Vulnerabilities"`
-}
-
-// Contains the name of the package, the current installed version and the version where the CVE was fixed
-type PackageInfo struct {
-	// Name of the package affected by a CVE
-	Name *string `json:"Name"`
-	// Current version of the package, typically affected by the CVE
-	InstalledVersion *string `json:"InstalledVersion"`
-	// Minimum version of the package in which the CVE is fixed
-	FixedVersion *string `json:"FixedVersion"`
-}
-
-// Information on current page returned by the API
-type PageInfo struct {
-	// The total number of objects on all pages
-	TotalCount int `json:"TotalCount"`
-	// The number of objects in this page
 	ItemCount int `json:"ItemCount"`
 }
 

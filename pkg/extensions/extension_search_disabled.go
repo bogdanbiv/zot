@@ -9,6 +9,7 @@ import (
 
 	"zotregistry.io/zot/pkg/api/config"
 	"zotregistry.io/zot/pkg/log"
+	"zotregistry.io/zot/pkg/meta"
 	"zotregistry.io/zot/pkg/meta/repodb"
 	"zotregistry.io/zot/pkg/scheduler"
 	"zotregistry.io/zot/pkg/storage"

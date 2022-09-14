@@ -22,8 +22,10 @@ import (
 	"zotregistry.io/zot/errors"
 	"zotregistry.io/zot/pkg/api/config"
 	ext "zotregistry.io/zot/pkg/extensions"
+	syncconf "zotregistry.io/zot/pkg/extensions/config/sync"
 	"zotregistry.io/zot/pkg/extensions/monitoring"
 	"zotregistry.io/zot/pkg/log"
+	"zotregistry.io/zot/pkg/meta" // MetadataStore   meta.MetadataStore
 	"zotregistry.io/zot/pkg/meta/repodb"
 	bolt "zotregistry.io/zot/pkg/meta/repodb/boltdb-wrapper"
 	dynamoParams "zotregistry.io/zot/pkg/meta/repodb/dynamodb-wrapper/params"
@@ -45,6 +47,7 @@ type Controller struct {
 	Config          *config.Config
 	Router          *mux.Router
 	RepoDB          repodb.RepoDB
+	MetaStore       *meta.MetadataStore
 	StoreController storage.StoreController
 	Log             log.Logger
 	Audit           *log.Logger
@@ -603,7 +606,7 @@ func (c *Controller) LoadNewConfig(reloadCtx context.Context, config *config.Con
 	c.Config.HTTP.RawAccessControl = config.HTTP.RawAccessControl
 
 	// Enable extensions if extension config is provided
-	if config.Extensions != nil && config.Extensions.Sync != nil {
+	if config.Extensions != nil && syncconf.Config.Enable != nil {
 		// reload sync config
 		c.Config.Extensions.Sync = config.Extensions.Sync
 		ext.EnableSyncExtension(reloadCtx, c.Config, c.wgShutDown, c.StoreController, c.Log)

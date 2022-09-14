@@ -576,7 +576,7 @@ type Query {
     ): PaginatedImagesResult!
 
     """
-    Returns a list of images which contain the specified digest 
+    Returns a list of images which contain the specified digest
     """
     ImageListForDigest(
         "Digest to be used in searching for images"
@@ -670,4 +670,41 @@ type Query {
         "Types of artifacts to return in the referrer list"
         type: [String!]
     ): [Referrer]!
+
+    """Receive RepoSummaries of repos starred by current user"""
+    StarredRepos(
+        "Sets the parameters of the requested page (how many to include and offset)"
+        requestedPage: PageInput
+    ): PaginatedReposResult!  # Newest based on created timestamp
+
+    """Receive RepoSummaries of repos bookmarked by current user"""
+    BookmarkedRepos(
+        "Sets the parameters of the requested page (how many to include and offset)"
+        requestedPage: PageInput
+    ): PaginatedReposResult!  # Assuming the user is obtained from context object
+}
+
+"""
+Result of mutations supported by the zot server
+"""
+type MutationResult {
+    """outcome of the Mutation"""
+    success: Boolean!
+}
+
+"""
+Mutations supported by the zot server
+"""
+type Mutation {
+    """Toggle add or remove a bookmark for repo for the current user (depending on current state)"""
+    ToggleBookmark(
+        "Repository name"
+        repo: String!
+    ): MutationResult!  # Assuming the user is obtained from context object
+
+    """Toggle add or remove star for repo for the current user (depending on current state)"""
+    ToggleStar(
+        "Repository name"
+        repo: String!
+    ): MutationResult!  # Assuming the user is obtained from context object
 }
