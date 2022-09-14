@@ -261,6 +261,69 @@ func getFileCredentials(filepath string) (syncconf.CredentialsFile, error) {
 	return creds, nil
 }
 
+/* // TODO: is this still used? 2023-01-16
+func getHTTPClient(regCfg *config.RegistryConfig, upstreamURL string, credentials config.Credentials,
+	log log.Logger,
+) (*resty.Client, *url.URL, error) {
+	client := resty.New()
+
+	if !common.Contains(regCfg.URLs, upstreamURL) {
+		return nil, nil, zerr.ErrSyncInvalidUpstreamURL
+	}
+
+	registryURL, err := url.Parse(upstreamURL)
+	if err != nil {
+		log.Error().Str("errorType", TypeOf(err)).
+			Err(err).Str("url", upstreamURL).Msg("couldn't parse url")
+
+		return nil, nil, err
+	}
+
+	if regCfg.CertDir != "" {
+		log.Debug().Msgf("sync: using certs directory: %s", regCfg.CertDir)
+		clientCert := path.Join(regCfg.CertDir, "client.cert")
+		clientKey := path.Join(regCfg.CertDir, "client.key")
+		caCertPath := path.Join(regCfg.CertDir, "ca.crt")
+
+		caCert, err := os.ReadFile(caCertPath)
+		if err != nil {
+			log.Error().Str("errorType", TypeOf(err)).
+				Err(err).Msg("couldn't read CA certificate")
+
+			return nil, nil, err
+		}
+
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		client.SetTLSClientConfig(&tls.Config{RootCAs: caCertPool, MinVersion: tls.VersionTLS12})
+
+		cert, err := tls.LoadX509KeyPair(clientCert, clientKey)
+		if err != nil {
+			log.Error().Str("errorType", TypeOf(err)).
+				Err(err).Msg("couldn't read certificates key pairs")
+
+			return nil, nil, err
+		}
+
+		client.SetCertificates(cert)
+	}
+
+	//nolint: gosec
+	if regCfg.TLSVerify != nil && !*regCfg.TLSVerify && registryURL.Scheme == "https" {
+		client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+	}
+
+	if credentials.Username != "" && credentials.Password != "" {
+		log.Debug().Msgf("sync: using basic auth")
+		client.SetBasicAuth(credentials.Username, credentials.Password)
+	}
+
+	client.SetRedirectPolicy(resty.FlexibleRedirectPolicy(httpMaxRedirectsCount))
+
+	return client, registryURL, nil
+} */
+
 func pushSyncedLocalImage(localRepo, reference, localCachePath string,
 	imageStore storage.ImageStore, log log.Logger,
 ) error {

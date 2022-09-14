@@ -158,6 +158,12 @@ type LayerSummary struct {
 	Score *int `json:"Score"`
 }
 
+// Result of mutations supported by the zot server
+type MutationResult struct {
+	// outcome of the Mutation
+	Success bool `json:"success"`
+}
+
 // Contains details about the OS and architecture of the image
 type OsArch struct {
 	// The name of the operating system which the image is built to run on,

@@ -3,7 +3,8 @@ package config
 import (
 	"time"
 
-	"zotregistry.io/zot/pkg/extensions/config/sync"
+	syncconf "zotregistry.io/zot/pkg/extensions/config/sync"
+	msconf "zotregistry.io/zot/pkg/meta/config"
 )
 
 // BaseConfig has params applicable to all extensions.
@@ -12,11 +13,12 @@ type BaseConfig struct {
 }
 
 type ExtensionConfig struct {
-	Search  *SearchConfig
-	Sync    *sync.Config
-	Metrics *MetricsConfig
-	Scrub   *ScrubConfig
-	Lint    *LintConfig
+	Search   *SearchConfig
+	Sync     *syncconf.Config
+	Metrics  *MetricsConfig
+	Scrub    *ScrubConfig
+	Lint     *LintConfig
+	Metadata *msconf.MetadataStoreConfig
 }
 
 type LintConfig struct {
