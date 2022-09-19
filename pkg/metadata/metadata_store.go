@@ -5,15 +5,14 @@ import (
 	msConfig "zotregistry.io/zot/pkg/metadata/config"
 )
 
-type Store interface {
+type Store struct {
 	UserStore
 	RepoDB
 }
 
 type StoreLocal struct {
 	config msConfig.MetadataStoreConfig
-	userDB UserStore
-	repoDB RepoDB
+	Store
 }
 
 type UserStore interface {
@@ -27,33 +26,41 @@ type RepoDB interface {
 	RepoDB()
 }
 
-func NewBaseMetaDB(msc msConfig.MetadataStoreConfig, log zlog.Logger) (Store, error) {
+func NewBaseMetaDB(msc msConfig.MetadataStoreConfig, log zlog.Logger) (StoreLocal, error) {
 	return StoreLocal{
 		config: msc,
-		userDB: NewUserMetadataLocalStore(msc.RootDir, "storageName", log),
-		repoDB: BaseRepoDB{},
+		Store:Store{
+			NewUserMetadataLocalStore(msc.RootDir, "storageName", log),
+			BaseRepoDB{},
+		},
+		
 	}, nil
 }
 
-func (m StoreLocal) ToggleStarRepo(userid, reponame string) error {
-	return m.userDB.ToggleStarRepo(userid, reponame)
+func doSmth() {
+	storeLocal, _ := NewBaseMetaDB(msConfig.MetadataStoreConfig{},zlog.Logger{})
+	storeLocal.GetStarredRepos("")
 }
 
-func (m StoreLocal) GetStarredRepos(userid string) ([]string, error) {
-	return m.userDB.GetStarredRepos(userid)
-}
+// func (m StoreLocal) ToggleStarRepo(userid, reponame string) error {
+// 	return m.userDB.ToggleStarRepo(userid, reponame)
+// }
 
-func (m StoreLocal) ToggleBookmarkRepo(userid, reponame string) error {
-	return m.userDB.ToggleBookmarkRepo(userid, reponame)
-}
+// func (m StoreLocal) GetStarredRepos(userid string) ([]string, error) {
+// 	return m.userDB.GetStarredRepos(userid)
+// }
 
-func (m StoreLocal) GetBookmarkedRepos(userid string) ([]string, error) {
-	return m.userDB.GetBookmarkedRepos(userid)
-}
+// func (m StoreLocal) ToggleBookmarkRepo(userid, reponame string) error {
+// 	return m.userDB.ToggleBookmarkRepo(userid, reponame)
+// }
 
-func (m StoreLocal) RepoDB() {
-	m.repoDB.RepoDB()
-}
+// func (m StoreLocal) GetBookmarkedRepos(userid string) ([]string, error) {
+// 	return m.userDB.GetBookmarkedRepos(userid)
+// }
+
+// func (m StoreLocal) RepoDB() {
+// 	m.repoDB.RepoDB()
+// }
 
 type BaseRepoDB struct{}
 
