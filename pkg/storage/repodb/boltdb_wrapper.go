@@ -488,6 +488,127 @@ func (bdw BoltDBWrapper) GetMultipleRepoMeta(
 	return foundRepos, foundManifestMetadataMap, err
 }
 
+func (bdw BoltDBWrapper) FilterRepos(ctx context.Context,
+	filter func(repoMeta RepoMetadata) bool,
+	requestedPage PageInput,
+) ([]RepoMetadata, map[string]ManifestMetadata, error) {
+	var (
+		foundRepos               = make([]RepoMetadata, 0)
+		foundManifestMetadataMap = make(map[string]ManifestMetadata)
+		pageFinder               PageFinder
+	)
+
+	pageFinder, err := NewBaseRepoPageFinder(requestedPage.Limit, requestedPage.Offset, requestedPage.SortBy)
+	if err != nil {
+		return []RepoMetadata{}, map[string]ManifestMetadata{}, err
+	}
+
+	err = bdw.db.View(func(tx *bolt.Tx) error {
+		var (
+			manifestMetadataMap = make(map[string]ManifestMetadata)
+			repoBuck            = tx.Bucket([]byte(RepoMetadataBucket))
+			manifestBuck        = tx.Bucket([]byte(ManifestMetadataBucket))
+		)
+
+		cursor := repoBuck.Cursor()
+
+		for repoName, repoMetaBlob := cursor.First(); repoName != nil; repoName, repoMetaBlob = cursor.Next() {
+			if ok, err := repoIsUserAvailable(ctx, string(repoName)); !ok || err != nil {
+				continue
+			}
+
+			var repoMeta RepoMetadata
+
+			err := json.Unmarshal(repoMetaBlob, &repoMeta)
+			if err != nil {
+				return err
+			}
+
+			var (
+				// specific values used for sorting that need to be calculated based on all manifests from the repo
+				repoDownloads   = 0
+				repoLastUpdated time.Time
+				osSet           = map[string]bool{}
+				archSet         = map[string]bool{}
+			)
+
+			for _, manifestDigest := range repoMeta.Tags {
+				var manifestMeta ManifestMetadata
+
+				manifestMeta, manifestDownloaded := manifestMetadataMap[manifestDigest]
+
+				if !manifestDownloaded {
+					manifestMetaBlob := manifestBuck.Get([]byte(manifestDigest))
+					if manifestMetaBlob == nil {
+						return zerr.ErrManifestMetaNotFound
+					}
+
+					err := json.Unmarshal(manifestMetaBlob, &manifestMeta)
+					if err != nil {
+						return errors.Wrapf(err, "repodb: error while unmarshaling manifest metadata for digest %s", manifestDigest)
+					}
+				}
+
+				// get fields related to filtering
+				var configContent ispec.Image
+
+				err = json.Unmarshal(manifestMeta.ConfigBlob, &configContent)
+				if err != nil {
+					return errors.Wrapf(err, "repodb: error while unmarshaling config content for digest %s", manifestDigest)
+				}
+
+				osSet[configContent.OS] = true
+				archSet[configContent.Architecture] = true
+
+				// get fields related to sorting
+				repoDownloads += manifestMeta.DownloadCount
+
+				imageLastUpdated, err := getImageLastUpdatedTimestamp(manifestMeta.ConfigBlob)
+				if err != nil {
+					return errors.Wrapf(err, "repodb: error while unmarshaling image config referenced by digest %s", manifestDigest)
+				}
+
+				if repoLastUpdated.Before(imageLastUpdated) {
+					repoLastUpdated = imageLastUpdated
+				}
+
+				manifestMetadataMap[manifestDigest] = manifestMeta
+			}
+
+			// repoFilterData := filterData{
+			// 	OsList:   getMapKeys(osSet),
+			// 	ArchList: getMapKeys(archSet),
+			// 	IsSigned: false,
+			// }
+
+			if !filter(repoMeta) {
+				continue
+			}
+
+			pageFinder.Add(DetailedRepoMeta{
+				RepoMeta:   repoMeta,
+				Downloads:  repoDownloads,
+				UpdateTime: repoLastUpdated,
+			})
+
+		}
+
+		foundRepos = pageFinder.Page()
+
+		// keep just the manifestMeta we need
+		for _, repoMeta := range foundRepos {
+			for _, manifestDigest := range repoMeta.Tags {
+				foundManifestMetadataMap[manifestDigest] = manifestMetadataMap[manifestDigest]
+			}
+		}
+
+		return nil
+	})
+
+	return foundRepos, foundManifestMetadataMap, err
+	return nil, nil, nil
+}
+
 func (bdw BoltDBWrapper) IncrementManifestDownloads(manifestDigest string) error {
 	err := bdw.db.Update(func(tx *bolt.Tx) error {
 		buck := tx.Bucket([]byte(ManifestMetadataBucket))

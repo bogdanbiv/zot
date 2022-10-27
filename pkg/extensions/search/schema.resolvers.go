@@ -526,7 +526,7 @@ func (r *queryResolver) StarredRepos(ctx context.Context, requestedPage *gql_gen
 
 	r.log.Info().Msg("resolve StarredRepos bf GetMultipleRepoMeta  for user")
 
-	multiReposMeta, foundManifestMetadataMap, err := r.repoDB.GetMultipleRepoMeta(
+	multiReposMeta, foundManifestMetadataMap, err := r.repoDB.FilterRepos(
 		ctx, filterFn, requestedPageInput)
 	if err != nil {
 		return nil, err

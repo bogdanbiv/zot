@@ -31,6 +31,9 @@ type RepoDB interface { //nolint:interfacebloat
 	// DeleteRepoTag delets the tag from the tag list of a repo
 	DeleteRepoTag(repo string, tag string) error
 
+	FilterRepos(context.Context, func(repoMeta RepoMetadata) bool, PageInput) (
+		[]RepoMetadata, map[string]ManifestMetadata, error)
+
 	// GetRepoMeta returns RepoMetadata of a repo from the database
 	GetRepoMeta(repo string) (RepoMetadata, error)
 
