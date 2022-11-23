@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 
+	mcommon "zotregistry.io/zot/pkg/common"
 	"zotregistry.io/zot/pkg/extensions/search/common"
 	"zotregistry.io/zot/pkg/extensions/search/convert"
 	"zotregistry.io/zot/pkg/extensions/search/gql_generated"
@@ -110,7 +111,19 @@ func (r *queryResolver) ImageListForDigest(ctx context.Context, id string, reque
 func (r *queryResolver) RepoListWithNewestImage(ctx context.Context, requestedPage *gql_generated.PageInput) (*gql_generated.PaginatedReposResult, error) {
 	r.log.Info().Msg("extension api: finding image list")
 
-	paginatedReposResult, err := repoListWithNewestImage(ctx, r.cveInfo, r.log, requestedPage, r.repoDB)
+	acCtx := getAccessContext(ctx)
+
+	bookmarkedRepoList, err := r.metadata.GetBookmarkedRepos(acCtx.Username)
+	if err != nil {
+		return &gql_generated.PaginatedReposResult{Results: []*gql_generated.RepoSummary{}}, err
+	}
+
+	starredRepoList, err := r.metadata.GetStarredRepos(acCtx.Username)
+	if err != nil {
+		return &gql_generated.PaginatedReposResult{Results: []*gql_generated.RepoSummary{}}, err
+	}
+
+	paginatedReposResult, err := repoListWithNewestImage(ctx, r.cveInfo, r.log, requestedPage, r.repoDB, bookmarkedRepoList, starredRepoList)
 	if err != nil {
 		r.log.Error().Err(err).Msg("unable to retrieve repo list")
 
@@ -134,7 +147,22 @@ func (r *queryResolver) ImageList(ctx context.Context, repo string, requestedPag
 
 // ExpandedRepoInfo is the resolver for the ExpandedRepoInfo field.
 func (r *queryResolver) ExpandedRepoInfo(ctx context.Context, repo string) (*gql_generated.RepoInfo, error) {
-	repoInfo, err := expandedRepoInfo(ctx, repo, r.repoDB, r.cveInfo, r.log)
+	acCtx := getAccessContext(ctx)
+
+	bookmarkedRepoList, err := r.metadata.GetBookmarkedRepos(acCtx.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	starredRepoList, err := r.metadata.GetStarredRepos(acCtx.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	isBookmarked := mcommon.Contains(bookmarkedRepoList, repo)
+	isStarred := mcommon.Contains(starredRepoList, repo)
+	repoInfo, err := expandedRepoInfo(ctx, repo, r.repoDB, r.cveInfo, r.log,
+		isBookmarked, isStarred)
 
 	return repoInfo, err
 }
@@ -147,8 +175,19 @@ func (r *queryResolver) GlobalSearch(ctx context.Context, query string, filter *
 
 	query = cleanQuery(query)
 	filter = cleanFilter(filter)
+	acCtx := getAccessContext(ctx)
 
-	paginatedReposResult, images, layers, err := globalSearch(ctx, query, r.repoDB, filter, requestedPage, r.cveInfo, r.log)
+	bookmarkedRepoList, err := r.metadata.GetBookmarkedRepos(acCtx.Username)
+	if err != nil {
+		return &gql_generated.GlobalSearchResult{}, err
+	}
+
+	starredRepoList, err := r.metadata.GetStarredRepos(acCtx.Username)
+	if err != nil {
+		return &gql_generated.GlobalSearchResult{}, err
+	}
+
+	paginatedReposResult, images, layers, err := globalSearch(ctx, query, r.repoDB, filter, requestedPage, r.cveInfo, r.log, bookmarkedRepoList, starredRepoList)
 
 	return &gql_generated.GlobalSearchResult{
 		Page:   paginatedReposResult.Page,
@@ -198,11 +237,20 @@ func (r *queryResolver) StarredRepos(ctx context.Context, requestedPage *gql_gen
 	paginatedRepos := &gql_generated.PaginatedReposResult{Results: []*gql_generated.RepoSummary{}}
 	acCtx := getAccessContext(ctx)
 	repoList, err := r.metadata.GetStarredRepos(acCtx.Username)
+
+	r.log.Info().Str("user", acCtx.Username).Msg("resolve StarredRepos for user")
+
+	bookmarkedRepoList, err := r.metadata.GetBookmarkedRepos(acCtx.Username)
 	if err != nil {
 		return paginatedRepos, err
 	}
 
-	r.log.Info().Str("user", acCtx.Username).Int("repolist size", len(repoList)).
+	starredRepoList, err := r.metadata.GetStarredRepos(acCtx.Username)
+	if err != nil {
+		return paginatedRepos, err
+	}
+
+	r.log.Info().Str("user", acCtx.Username).Int("repolist size", len(starredRepoList)).
 		Msg("resolve StarredRepos for user")
 
 	// check user access level
@@ -251,12 +299,16 @@ func (r *queryResolver) StarredRepos(ctx context.Context, requestedPage *gql_gen
 		r.log.Info().Str("repoName", repoMeta.Name).
 			Msg("resolve StarredRepos bf RepoMeta2RepoSummary for repoName")
 
+		isBookmarked := mcommon.Contains(bookmarkedRepoList, repoMeta.Name)
+		isStarred := true
 		repoSummaries[index] = convert.RepoMeta2RepoSummary(
 			ctx,
 			repoMeta,
 			foundManifestMetadataMap,
 			skip,
 			r.cveInfo,
+			isBookmarked,
+			isStarred,
 		)
 
 		r.log.Info().Str("repoName", repoMeta.Name).
@@ -279,13 +331,18 @@ func (r *queryResolver) BookmarkedRepos(ctx context.Context, requestedPage *gql_
 	paginatedRepos := &gql_generated.PaginatedReposResult{Results: []*gql_generated.RepoSummary{}}
 	acCtx := getAccessContext(ctx)
 
-	repoList, err := r.metadata.GetBookmarkedRepos(acCtx.Username)
+	bookmarkedRepoList, err := r.metadata.GetBookmarkedRepos(acCtx.Username)
+	if err != nil {
+		return paginatedRepos, err
+	}
+
+	starredRepoList, err := r.metadata.GetStarredRepos(acCtx.Username)
 	if err != nil {
 		return paginatedRepos, err
 	}
 
 	// check user access level
-	filteredRepos, err := filterReposMap(ctx, repoList)
+	filteredRepos, err := filterReposMap(ctx, bookmarkedRepoList)
 	if err != nil {
 		return nil, err
 	}
@@ -316,12 +373,16 @@ func (r *queryResolver) BookmarkedRepos(ctx context.Context, requestedPage *gql_
 	}
 
 	for index, repoMeta := range multiReposMeta {
+		isBookmarked := true
+		isStarred := mcommon.Contains(starredRepoList, repoMeta.Name)
 		repoSummaries[index] = convert.RepoMeta2RepoSummary(
 			ctx,
 			repoMeta,
 			foundManifestMetadataMap,
 			skip,
 			r.cveInfo,
+			isBookmarked,
+			isStarred,
 		)
 	}
 
