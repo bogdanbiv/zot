@@ -64,7 +64,7 @@ type RepoDB interface { //nolint:interfacebloat
 	DeleteSignature(manifestDigest godigest.Digest, sm SignatureMetadata) error
 
 	// SearchRepos searches for repos given a search string
-	SearchRepos(ctx context.Context, searchText string, filter Filter, requestedPage PageInput) (
+	SearchRepos(ctx context.Context, searchText string, filter Filter, requestedPage PageInput, bookmarks []string) (
 		[]RepoMetadata, map[string]ManifestMetadata, PageInfo, error)
 
 	// SearchTags searches for images(repo:tag) given a search string
@@ -151,10 +151,12 @@ type Filter struct {
 	Os            []*string
 	Arch          []*string
 	HasToBeSigned *bool
+	HasToBeBookmarked *bool
 }
 
 type filterData struct {
 	OsList   []string
 	ArchList []string
 	IsSigned bool
+	IsBookmarked bool
 }

@@ -35,9 +35,10 @@ type CVEResultForImage struct {
 }
 
 type Filter struct {
-	Os            []*string `json:"Os"`
-	Arch          []*string `json:"Arch"`
-	HasToBeSigned *bool     `json:"HasToBeSigned"`
+	Os                []*string `json:"Os"`
+	Arch              []*string `json:"Arch"`
+	HasToBeSigned     *bool     `json:"HasToBeSigned"`
+	HasToBeBookmarked *bool     `json:"HasToBeBookmarked"`
 }
 
 // Search everything. Can search Images, Repos and Layers

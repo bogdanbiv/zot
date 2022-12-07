@@ -394,7 +394,7 @@ func repoListWithNewestImage(
 		),
 	}
 
-	reposMeta, manifestMetaMap, pageInfo, err := repoDB.SearchRepos(ctx, "", repodb.Filter{}, pageInput)
+	reposMeta, manifestMetaMap, pageInfo, err := repoDB.SearchRepos(ctx, "", repodb.Filter{}, pageInput, bookmarkedByUser)
 	if err != nil {
 		return &gql_generated.PaginatedReposResult{}, err
 	}
@@ -434,9 +434,10 @@ func globalSearch(ctx context.Context, query string, repoDB repodb.RepoDB, filte
 	localFilter := repodb.Filter{}
 	if filter != nil {
 		localFilter = repodb.Filter{
-			Os:            filter.Os,
-			Arch:          filter.Arch,
-			HasToBeSigned: filter.HasToBeSigned,
+			Os:                filter.Os,
+			Arch:              filter.Arch,
+			HasToBeSigned:     filter.HasToBeSigned,
+			HasToBeBookmarked: filter.HasToBeBookmarked,
 		}
 	}
 
@@ -453,7 +454,7 @@ func globalSearch(ctx context.Context, query string, repoDB repodb.RepoDB, filte
 			),
 		}
 
-		reposMeta, manifestMetaMap, pageInfo, err := repoDB.SearchRepos(ctx, query, localFilter, pageInput)
+		reposMeta, manifestMetaMap, pageInfo, err := repoDB.SearchRepos(ctx, query, localFilter, pageInput, bookmarkedByUser)
 		if err != nil {
 			return &gql_generated.PaginatedReposResult{}, []*gql_generated.ImageSummary{}, []*gql_generated.LayerSummary{}, err
 		}

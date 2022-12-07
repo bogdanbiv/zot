@@ -574,7 +574,7 @@ func TestBoltDBWrapper(t *testing.T) {
 				err = repoDB.SetManifestMeta(manifestDigest3, emptyRepoMeta)
 				So(err, ShouldBeNil)
 
-				repos, manifesMetaMap, _, err := repoDB.SearchRepos(ctx, "", repodb.Filter{}, repodb.PageInput{})
+				repos, manifesMetaMap, _, err := repoDB.SearchRepos(ctx, "", repodb.Filter{}, repodb.PageInput{}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 2)
 				So(len(manifesMetaMap), ShouldEqual, 3)
@@ -590,7 +590,7 @@ func TestBoltDBWrapper(t *testing.T) {
 				err = repoDB.SetManifestMeta(manifestDigest1, emptyRepoMeta)
 				So(err, ShouldBeNil)
 
-				repos, manifesMetaMap, _, err := repoDB.SearchRepos(ctx, repo1, repodb.Filter{}, repodb.PageInput{})
+				repos, manifesMetaMap, _, err := repoDB.SearchRepos(ctx, repo1, repodb.Filter{}, repodb.PageInput{}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 1)
 				So(len(manifesMetaMap), ShouldEqual, 1)
@@ -604,7 +604,7 @@ func TestBoltDBWrapper(t *testing.T) {
 				err = repoDB.SetRepoTag(repo1, tag2, manifestDigest2)
 				So(err, ShouldBeNil)
 
-				repos, manifesMetaMap, _, err := repoDB.SearchRepos(ctx, "RepoThatDoesntExist", repodb.Filter{}, repodb.PageInput{})
+				repos, manifesMetaMap, _, err := repoDB.SearchRepos(ctx, "RepoThatDoesntExist", repodb.Filter{}, repodb.PageInput{}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 0)
 				So(len(manifesMetaMap), ShouldEqual, 0)
@@ -625,7 +625,7 @@ func TestBoltDBWrapper(t *testing.T) {
 				err = repoDB.SetManifestMeta(manifestDigest3, emptyRepoMeta)
 				So(err, ShouldBeNil)
 
-				repos, manifesMetaMap, _, err := repoDB.SearchRepos(ctx, "pine", repodb.Filter{}, repodb.PageInput{})
+				repos, manifesMetaMap, _, err := repoDB.SearchRepos(ctx, "pine", repodb.Filter{}, repodb.PageInput{}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 2)
 				So(manifesMetaMap, ShouldContainKey, manifestDigest1.String())
@@ -646,7 +646,7 @@ func TestBoltDBWrapper(t *testing.T) {
 				err = repoDB.SetManifestMeta(manifestDigest2, emptyRepoMeta)
 				So(err, ShouldBeNil)
 
-				repos, manifesMetaMap, _, err := repoDB.SearchRepos(ctx, "", repodb.Filter{}, repodb.PageInput{})
+				repos, manifesMetaMap, _, err := repoDB.SearchRepos(ctx, "", repodb.Filter{}, repodb.PageInput{}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 3)
 				So(len(manifesMetaMap), ShouldEqual, 1)
@@ -675,7 +675,7 @@ func TestBoltDBWrapper(t *testing.T) {
 				authzCtxKey := localCtx.GetContextKey()
 				ctx := context.WithValue(context.Background(), authzCtxKey, acCtx)
 
-				repos, _, _, err := repoDB.SearchRepos(ctx, "repo", repodb.Filter{}, repodb.PageInput{})
+				repos, _, _, err := repoDB.SearchRepos(ctx, "repo", repodb.Filter{}, repodb.PageInput{}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 2)
 				for _, k := range repos {
@@ -721,14 +721,14 @@ func TestBoltDBWrapper(t *testing.T) {
 					repoNameBuilder.Reset()
 				}
 
-				repos, _, _, err := repoDB.SearchRepos(ctx, "repo", repodb.Filter{}, repodb.PageInput{})
+				repos, _, _, err := repoDB.SearchRepos(ctx, "repo", repodb.Filter{}, repodb.PageInput{}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, reposCount)
 
 				repos, _, _, err = repoDB.SearchRepos(ctx, "repo", repodb.Filter{}, repodb.PageInput{
 					Limit:  20,
 					SortBy: repodb.AlphabeticAsc,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 20)
 
@@ -736,7 +736,7 @@ func TestBoltDBWrapper(t *testing.T) {
 					Limit:  1,
 					Offset: 0,
 					SortBy: repodb.AlphabeticAsc,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 1)
 				So(repos[0].Name, ShouldResemble, "repo0")
@@ -745,7 +745,7 @@ func TestBoltDBWrapper(t *testing.T) {
 					Limit:  1,
 					Offset: 1,
 					SortBy: repodb.AlphabeticAsc,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 1)
 				So(repos[0].Name, ShouldResemble, "repo1")
@@ -754,7 +754,7 @@ func TestBoltDBWrapper(t *testing.T) {
 					Limit:  1,
 					Offset: 49,
 					SortBy: repodb.AlphabeticAsc,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 1)
 				So(repos[0].Name, ShouldResemble, "repo9")
@@ -763,7 +763,7 @@ func TestBoltDBWrapper(t *testing.T) {
 					Limit:  1,
 					Offset: 49,
 					SortBy: repodb.AlphabeticDsc,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 1)
 				So(repos[0].Name, ShouldResemble, "repo0")
@@ -772,7 +772,7 @@ func TestBoltDBWrapper(t *testing.T) {
 					Limit:  1,
 					Offset: 0,
 					SortBy: repodb.AlphabeticDsc,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 1)
 				So(repos[0].Name, ShouldResemble, "repo9")
@@ -782,7 +782,7 @@ func TestBoltDBWrapper(t *testing.T) {
 					Limit:  1,
 					Offset: 0,
 					SortBy: repodb.Downloads,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 1)
 				So(repos[0].Name, ShouldResemble, "repo49")
@@ -792,7 +792,7 @@ func TestBoltDBWrapper(t *testing.T) {
 					Limit:  1,
 					Offset: 0,
 					SortBy: repodb.Stars,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 1)
 				So(repos[0].Name, ShouldResemble, "repo0")
@@ -802,7 +802,7 @@ func TestBoltDBWrapper(t *testing.T) {
 					Limit:  1,
 					Offset: 0,
 					SortBy: repodb.UpdateTime,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 1)
 				So(repos[0].Name, ShouldResemble, "repo49")
@@ -811,7 +811,7 @@ func TestBoltDBWrapper(t *testing.T) {
 					Limit:  1,
 					Offset: 100,
 					SortBy: repodb.UpdateTime,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 				So(len(repos), ShouldEqual, 0)
 				So(repos, ShouldBeEmpty)
@@ -822,28 +822,28 @@ func TestBoltDBWrapper(t *testing.T) {
 					Limit:  1,
 					Offset: 100,
 					SortBy: repodb.UpdateTime,
-				})
+				}, []string{})
 				So(err, ShouldBeNil)
 
 				_, _, _, err = repoDB.SearchRepos(ctx, "repo", repodb.Filter{}, repodb.PageInput{
 					Limit:  -1,
 					Offset: 100,
 					SortBy: repodb.UpdateTime,
-				})
+				}, []string{})
 				So(err, ShouldNotBeNil)
 
 				_, _, _, err = repoDB.SearchRepos(ctx, "repo", repodb.Filter{}, repodb.PageInput{
 					Limit:  1,
 					Offset: -1,
 					SortBy: repodb.UpdateTime,
-				})
+				}, []string{})
 				So(err, ShouldNotBeNil)
 
 				_, _, _, err = repoDB.SearchRepos(ctx, "repo", repodb.Filter{}, repodb.PageInput{
 					Limit:  1,
 					Offset: 1,
 					SortBy: repodb.SortCriteria("InvalidSortingCriteria"),
-				})
+				}, []string{})
 				So(err, ShouldNotBeNil)
 			})
 		})
@@ -1120,7 +1120,7 @@ func TestBoltDBWrapper(t *testing.T) {
 				Os: []*string{&opSys},
 			}
 
-			repos, _, _, err := repoDB.SearchRepos(context.TODO(), "", filter, repodb.PageInput{SortBy: repodb.AlphabeticAsc})
+			repos, _, _, err := repoDB.SearchRepos(context.TODO(), "", filter, repodb.PageInput{SortBy: repodb.AlphabeticAsc}, []string{})
 			So(err, ShouldBeNil)
 			So(len(repos), ShouldEqual, 2)
 			So(repos[0].Name, ShouldResemble, "repo1")
@@ -1130,7 +1130,7 @@ func TestBoltDBWrapper(t *testing.T) {
 			filter = repodb.Filter{
 				Os: []*string{&opSys},
 			}
-			repos, _, _, err = repoDB.SearchRepos(context.TODO(), "repo", filter, repodb.PageInput{SortBy: repodb.AlphabeticAsc})
+			repos, _, _, err = repoDB.SearchRepos(context.TODO(), "repo", filter, repodb.PageInput{SortBy: repodb.AlphabeticAsc}, []string{})
 			So(err, ShouldBeNil)
 			So(len(repos), ShouldEqual, 2)
 			So(repos[0].Name, ShouldResemble, "repo1")
@@ -1140,7 +1140,7 @@ func TestBoltDBWrapper(t *testing.T) {
 			filter = repodb.Filter{
 				Os: []*string{&opSys},
 			}
-			repos, _, _, err = repoDB.SearchRepos(context.TODO(), "repo", filter, repodb.PageInput{SortBy: repodb.AlphabeticAsc})
+			repos, _, _, err = repoDB.SearchRepos(context.TODO(), "repo", filter, repodb.PageInput{SortBy: repodb.AlphabeticAsc}, []string{})
 			So(err, ShouldBeNil)
 			So(len(repos), ShouldEqual, 0)
 
@@ -1150,7 +1150,7 @@ func TestBoltDBWrapper(t *testing.T) {
 				Os:   []*string{&opSys},
 				Arch: []*string{&arch},
 			}
-			repos, _, _, err = repoDB.SearchRepos(context.TODO(), "repo", filter, repodb.PageInput{SortBy: repodb.AlphabeticAsc})
+			repos, _, _, err = repoDB.SearchRepos(context.TODO(), "repo", filter, repodb.PageInput{SortBy: repodb.AlphabeticAsc}, []string{})
 			So(err, ShouldBeNil)
 			So(len(repos), ShouldEqual, 2)
 			So(repos[0].Name, ShouldResemble, "repo1")
@@ -1162,7 +1162,7 @@ func TestBoltDBWrapper(t *testing.T) {
 				Os:   []*string{&opSys},
 				Arch: []*string{&arch},
 			}
-			repos, _, _, err = repoDB.SearchRepos(context.TODO(), "repo", filter, repodb.PageInput{SortBy: repodb.AlphabeticAsc})
+			repos, _, _, err = repoDB.SearchRepos(context.TODO(), "repo", filter, repodb.PageInput{SortBy: repodb.AlphabeticAsc}, []string{})
 			So(err, ShouldBeNil)
 			So(len(repos), ShouldEqual, 1)
 		})
@@ -1329,7 +1329,7 @@ func TestRelevanceSorting(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			repos, _, _, err := repoDB.SearchRepos(ctx, "pine", repodb.Filter{},
-				repodb.PageInput{SortBy: repodb.Relevance},
+				repodb.PageInput{SortBy: repodb.Relevance}, []string{},
 			)
 
 			So(err, ShouldBeNil)

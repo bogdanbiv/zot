@@ -1244,6 +1244,7 @@ input Filter {
     Os: [String]
     Arch: [String]
     HasToBeSigned: Boolean
+    HasToBeBookmarked: Boolean
 }
 
 type Query {
@@ -8335,7 +8336,7 @@ func (ec *executionContext) unmarshalInputFilter(ctx context.Context, obj interf
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"Os", "Arch", "HasToBeSigned"}
+	fieldsInOrder := [...]string{"Os", "Arch", "HasToBeSigned", "HasToBeBookmarked"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8363,6 +8364,14 @@ func (ec *executionContext) unmarshalInputFilter(ctx context.Context, obj interf
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("HasToBeSigned"))
 			it.HasToBeSigned, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "HasToBeBookmarked":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("HasToBeBookmarked"))
+			it.HasToBeBookmarked, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}

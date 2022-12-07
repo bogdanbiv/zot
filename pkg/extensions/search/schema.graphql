@@ -207,6 +207,7 @@ input Filter {
     Os: [String]
     Arch: [String]
     HasToBeSigned: Boolean
+    HasToBeBookmarked: Boolean
 }
 
 type Query {

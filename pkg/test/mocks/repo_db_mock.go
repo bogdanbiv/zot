@@ -43,7 +43,7 @@ type RepoDBMock struct {
 
 	DeleteSignatureFn func(manifestDigest godigest.Digest, sm repodb.SignatureMetadata) error
 
-	SearchReposFn func(ctx context.Context, searchText string, filter repodb.Filter, requestedPage repodb.PageInput) (
+	SearchReposFn func(ctx context.Context, searchText string, filter repodb.Filter, requestedPage repodb.PageInput, bookmarks []string) (
 		[]repodb.RepoMetadata, map[string]repodb.ManifestMetadata, repodb.PageInfo, error)
 
 	SearchTagsFn func(ctx context.Context, searchText string, filter repodb.Filter, requestedPage repodb.PageInput) (
@@ -196,10 +196,10 @@ func (sdm RepoDBMock) DeleteSignature(manifestDigest godigest.Digest, sm repodb.
 }
 
 func (sdm RepoDBMock) SearchRepos(ctx context.Context, searchText string, filter repodb.Filter,
-	requestedPage repodb.PageInput,
+	requestedPage repodb.PageInput, bookmarks []string,
 ) ([]repodb.RepoMetadata, map[string]repodb.ManifestMetadata, repodb.PageInfo, error) {
 	if sdm.SearchReposFn != nil {
-		return sdm.SearchReposFn(ctx, searchText, filter, requestedPage)
+		return sdm.SearchReposFn(ctx, searchText, filter, requestedPage, bookmarks)
 	}
 
 	return []repodb.RepoMetadata{}, map[string]repodb.ManifestMetadata{}, repodb.PageInfo{}, nil

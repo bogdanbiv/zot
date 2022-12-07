@@ -560,7 +560,7 @@ func (bdw BoltDBWrapper) DeleteSignature(manifestDigest godigest.Digest, sigMeta
 	return err
 }
 
-func (bdw BoltDBWrapper) SearchRepos(ctx context.Context, searchText string, filter Filter, requestedPage PageInput,
+func (bdw BoltDBWrapper) SearchRepos(ctx context.Context, searchText string, filter Filter, requestedPage PageInput, bookmarks []string,
 ) ([]RepoMetadata, map[string]ManifestMetadata, PageInfo, error) {
 	var (
 		foundRepos               = make([]RepoMetadata, 0)
@@ -1052,6 +1052,10 @@ func acceptedByFilter(filter Filter, data filterData) bool {
 	}
 
 	if filter.HasToBeSigned != nil && *filter.HasToBeSigned != data.IsSigned {
+		return false
+	}
+
+	if filter.HasToBeBookmarked != nil && *filter.HasToBeBookmarked != data.IsSigned {
 		return false
 	}
 
