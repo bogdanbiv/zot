@@ -24,6 +24,7 @@ import (
 
 	"zotregistry.io/zot/errors"
 	. "zotregistry.io/zot/pkg/common"
+	syncconf "zotregistry.io/zot/pkg/extensions/config/sync"
 	"zotregistry.io/zot/pkg/extensions/monitoring"
 	"zotregistry.io/zot/pkg/log"
 	"zotregistry.io/zot/pkg/storage"
@@ -133,8 +134,8 @@ func TestSyncInternal(t *testing.T) {
 		updateDuration := time.Microsecond
 		port := test.GetFreePort()
 		baseURL := test.GetBaseURL(port)
-		syncRegistryConfig := RegistryConfig{
-			Content: []Content{
+		syncRegistryConfig := syncconf.RegistryConfig{
+			Content: []syncconf.Content{
 				{
 					Prefix: testImage,
 				},
@@ -146,8 +147,8 @@ func TestSyncInternal(t *testing.T) {
 		}
 
 		defaultValue := true
-		cfg := Config{
-			Registries:      []RegistryConfig{syncRegistryConfig},
+		cfg := syncconf.Config{
+			Registries:      []syncconf.RegistryConfig{syncRegistryConfig},
 			Enable:          &defaultValue,
 			CredentialsFile: "/invalid/path/to/file",
 		}
@@ -165,8 +166,8 @@ func TestSyncInternal(t *testing.T) {
 		updateDuration := time.Microsecond
 		port := test.GetFreePort()
 		baseURL := test.GetBaseURL(port)
-		syncRegistryConfig := RegistryConfig{
-			Content: []Content{
+		syncRegistryConfig := syncconf.RegistryConfig{
+			Content: []syncconf.Content{
 				{
 					Prefix: testImage,
 				},
@@ -190,7 +191,8 @@ func TestSyncInternal(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		err = syncRegistry(ctx, syncRegistryConfig, "randomUpstreamURL",
-			storage.StoreController{DefaultStore: imageStore}, localCtx, policyCtx, Credentials{}, nil, log)
+			storage.StoreController{DefaultStore: imageStore}, localCtx, policyCtx,
+			syncconf.Credentials{}, nil, log)
 		So(err, ShouldNotBeNil)
 	})
 
@@ -240,8 +242,8 @@ func TestSyncInternal(t *testing.T) {
 	Convey("Test getUpstreamCatalog() with missing certs", t, func() {
 		var tlsVerify bool
 		updateDuration := time.Microsecond
-		syncRegistryConfig := RegistryConfig{
-			Content: []Content{
+		syncRegistryConfig := syncconf.RegistryConfig{
+			Content: []syncconf.Content{
 				{
 					Prefix: testImage,
 				},
@@ -276,8 +278,8 @@ func TestSyncInternal(t *testing.T) {
 		baseURL := test.GetBaseURL(port)
 		baseSecureURL := test.GetSecureBaseURL(port)
 
-		syncRegistryConfig := RegistryConfig{
-			Content: []Content{
+		syncRegistryConfig := syncconf.RegistryConfig{
+			Content: []syncconf.Content{
 				{
 					Prefix: testImage,
 				},
@@ -340,12 +342,12 @@ func TestSyncInternal(t *testing.T) {
 	Convey("Test imagesToCopyFromUpstream()", t, func() {
 		upstreamCtx := &types.SystemContext{}
 
-		_, err := imagesToCopyFromUpstream(context.Background(), "localhost:4566", "repo1", upstreamCtx,
-			Content{}, log.NewLogger("debug", ""))
+		_, err := imagesToCopyFromUpstream(context.Background(), "localhost:4566", "repo1",
+			upstreamCtx, syncconf.Content{}, log.NewLogger("debug", ""))
 		So(err, ShouldNotBeNil)
 
-		_, err = imagesToCopyFromUpstream(context.Background(), "docker://localhost:4566", "repo1", upstreamCtx,
-			Content{}, log.NewLogger("debug", ""))
+		_, err = imagesToCopyFromUpstream(context.Background(), "docker://localhost:4566", "repo1",
+			upstreamCtx, syncconf.Content{}, log.NewLogger("debug", ""))
 		So(err, ShouldNotBeNil)
 	})
 
@@ -375,7 +377,8 @@ func TestSyncInternal(t *testing.T) {
 			false, false, log, metrics, nil, nil,
 		)
 
-		sig := newSignaturesCopier(client, Credentials{}, *regURL, storage.StoreController{DefaultStore: imageStore}, log)
+		sig := newSignaturesCopier(client, syncconf.Credentials{},
+			*regURL, storage.StoreController{DefaultStore: imageStore}, log)
 
 		err = sig.syncCosignSignature(testImage, testImage, testImageTag, &ispec.Manifest{})
 		So(err, ShouldNotBeNil)
@@ -423,7 +426,8 @@ func TestSyncInternal(t *testing.T) {
 		So(regURL, ShouldNotBeNil)
 
 		client := &http.Client{}
-		sig := newSignaturesCopier(client, Credentials{}, *regURL, storage.StoreController{DefaultStore: imageStore}, log)
+		sig := newSignaturesCopier(client, syncconf.Credentials{},
+			*regURL, storage.StoreController{DefaultStore: imageStore}, log)
 
 		canBeSkipped, err = sig.canSkipNotaryRefs(testImage, testImageManifestDigest.String(), refs)
 		So(err, ShouldBeNil)
@@ -461,7 +465,7 @@ func TestSyncInternal(t *testing.T) {
 
 	Convey("Test filterRepos()", t, func() {
 		repos := []string{"repo", "repo1", "repo2", "repo/repo2", "repo/repo2/repo3/repo4"}
-		contents := []Content{
+		contents := []syncconf.Content{
 			{
 				Prefix: "repo",
 			},
@@ -477,7 +481,7 @@ func TestSyncInternal(t *testing.T) {
 		So(filteredRepos[1], ShouldResemble, []string{"repo/repo2", "repo/repo2/repo3/repo4"})
 		So(filteredRepos[2], ShouldResemble, []string{"repo1", "repo2"})
 
-		contents = []Content{
+		contents = []syncconf.Content{
 			{
 				Prefix: "[repo%#@",
 			},
@@ -750,52 +754,52 @@ func TestSyncInternal(t *testing.T) {
 func TestURLHelperFunctions(t *testing.T) {
 	testCases := []struct {
 		repo     string
-		content  Content
+		content  syncconf.Content
 		expected string
 	}{
 		{
 			repo:     "alpine/zot-fold/alpine",
-			content:  Content{Prefix: "zot-fold/alpine", Destination: "/alpine", StripPrefix: false},
+			content:  syncconf.Content{Prefix: "zot-fold/alpine", Destination: "/alpine", StripPrefix: false},
 			expected: "zot-fold/alpine",
 		},
 		{
 			repo:     "zot-fold/alpine",
-			content:  Content{Prefix: "zot-fold/alpine", Destination: "/", StripPrefix: false},
+			content:  syncconf.Content{Prefix: "zot-fold/alpine", Destination: "/", StripPrefix: false},
 			expected: "zot-fold/alpine",
 		},
 		{
 			repo:     "alpine",
-			content:  Content{Prefix: "zot-fold/alpine", Destination: "/alpine", StripPrefix: true},
+			content:  syncconf.Content{Prefix: "zot-fold/alpine", Destination: "/alpine", StripPrefix: true},
 			expected: "zot-fold/alpine",
 		},
 		{
 			repo:     "/",
-			content:  Content{Prefix: "zot-fold/alpine", Destination: "/", StripPrefix: true},
+			content:  syncconf.Content{Prefix: "zot-fold/alpine", Destination: "/", StripPrefix: true},
 			expected: "zot-fold/alpine",
 		},
 		{
 			repo:     "/",
-			content:  Content{Prefix: "/", Destination: "/", StripPrefix: true},
+			content:  syncconf.Content{Prefix: "/", Destination: "/", StripPrefix: true},
 			expected: "/",
 		},
 		{
 			repo:     "alpine",
-			content:  Content{Prefix: "zot-fold/alpine", Destination: "/alpine", StripPrefix: true},
+			content:  syncconf.Content{Prefix: "zot-fold/alpine", Destination: "/alpine", StripPrefix: true},
 			expected: "zot-fold/alpine",
 		},
 		{
 			repo:     "alpine",
-			content:  Content{Prefix: "zot-fold/*", Destination: "/", StripPrefix: true},
+			content:  syncconf.Content{Prefix: "zot-fold/*", Destination: "/", StripPrefix: true},
 			expected: "zot-fold/alpine",
 		},
 		{
 			repo:     "alpine",
-			content:  Content{Prefix: "zot-fold/**", Destination: "/", StripPrefix: true},
+			content:  syncconf.Content{Prefix: "zot-fold/**", Destination: "/", StripPrefix: true},
 			expected: "zot-fold/alpine",
 		},
 		{
 			repo:     "zot-fold/alpine",
-			content:  Content{Prefix: "zot-fold/**", Destination: "/", StripPrefix: false},
+			content:  syncconf.Content{Prefix: "zot-fold/**", Destination: "/", StripPrefix: false},
 			expected: "zot-fold/alpine",
 		},
 	}
@@ -819,7 +823,7 @@ func TestURLHelperFunctions(t *testing.T) {
 func TestFindRepoMatchingContentID(t *testing.T) {
 	testCases := []struct {
 		repo     string
-		content  []Content
+		content  []syncconf.Content
 		expected struct {
 			contentID int
 			err       error
@@ -827,7 +831,7 @@ func TestFindRepoMatchingContentID(t *testing.T) {
 	}{
 		{
 			repo: "alpine/zot-fold/alpine",
-			content: []Content{
+			content: []syncconf.Content{
 				{Prefix: "zot-fold/alpine/", Destination: "/alpine", StripPrefix: true},
 				{Prefix: "zot-fold/alpine", Destination: "/alpine", StripPrefix: false},
 			},
@@ -838,7 +842,7 @@ func TestFindRepoMatchingContentID(t *testing.T) {
 		},
 		{
 			repo: "alpine/zot-fold/alpine",
-			content: []Content{
+			content: []syncconf.Content{
 				{Prefix: "zot-fold/*", Destination: "/alpine", StripPrefix: false},
 				{Prefix: "zot-fold/alpine", Destination: "/alpine", StripPrefix: true},
 			},
@@ -849,7 +853,7 @@ func TestFindRepoMatchingContentID(t *testing.T) {
 		},
 		{
 			repo: "myFold/zot-fold/internal/alpine",
-			content: []Content{
+			content: []syncconf.Content{
 				{Prefix: "zot-fold/alpine", Destination: "/alpine", StripPrefix: true},
 				{Prefix: "zot-fold/**", Destination: "/myFold", StripPrefix: false},
 			},
@@ -860,7 +864,7 @@ func TestFindRepoMatchingContentID(t *testing.T) {
 		},
 		{
 			repo: "alpine",
-			content: []Content{
+			content: []syncconf.Content{
 				{Prefix: "zot-fold/*", Destination: "/alpine", StripPrefix: true},
 				{Prefix: "zot-fold/alpine", Destination: "/", StripPrefix: true},
 			},
@@ -871,7 +875,7 @@ func TestFindRepoMatchingContentID(t *testing.T) {
 		},
 		{
 			repo: "alpine",
-			content: []Content{
+			content: []syncconf.Content{
 				{Prefix: "zot-fold/*", Destination: "/alpine", StripPrefix: true},
 				{Prefix: "zot-fold/*", Destination: "/", StripPrefix: true},
 			},
@@ -882,7 +886,7 @@ func TestFindRepoMatchingContentID(t *testing.T) {
 		},
 		{
 			repo: "alpine/alpine",
-			content: []Content{
+			content: []syncconf.Content{
 				{Prefix: "zot-fold/*", Destination: "/alpine", StripPrefix: true},
 				{Prefix: "zot-fold/*", Destination: "/", StripPrefix: true},
 			},
