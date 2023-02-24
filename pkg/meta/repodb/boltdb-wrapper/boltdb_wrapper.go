@@ -1020,7 +1020,6 @@ func NewManifestMetadata(manifestDigest string, repoMeta repodb.RepoMetadata,
 	return manifestMeta
 }
 
-// TODO: actually implement 2023-01-16
 func (bdw DBWrapper) FilterRepos(ctx context.Context,
 	filter repodb.FilterRepoFunc,
 	requestedPage repodb.PageInput,

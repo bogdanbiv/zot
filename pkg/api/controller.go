@@ -526,6 +526,19 @@ func (c *Controller) InitRepoDB(reloadCtx context.Context) error {
 	return nil
 }
 
+func CreateMetaDBDriver(storageConfig config.StorageConfig, log log.Logger) (repodb.RepoDB, error) {
+	if storageConfig.RemoteCache {
+		dynamoParams := getDynamoParams(storageConfig.CacheDriver, log)
+
+		return repodbfactory.Create("dynamodb", dynamoParams) //nolint:contextcheck
+	}
+
+	params := bolt.DBParameters{}
+	params.RootDir = storageConfig.RootDirectory
+
+	return repodbfactory.Create("boltdb", params) //nolint:contextcheck
+}
+
 func CreateRepoDBDriver(storageConfig config.StorageConfig, log log.Logger) (repodb.RepoDB, error) {
 	if storageConfig.RemoteCache {
 		dynamoParams := getDynamoParams(storageConfig.CacheDriver, log)

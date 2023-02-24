@@ -871,7 +871,6 @@ func (dwr DBWrapper) collectImageIndexFilterInfo(indexDigest string, repoMeta re
 	}, nil
 }
 
-// TODO: actually implement 2023-01-16
 func (dwr DBWrapper) FilterRepos(ctx context.Context,
 	filter repodb.FilterRepoFunc,
 	requestedPage repodb.PageInput,
@@ -881,58 +880,58 @@ func (dwr DBWrapper) FilterRepos(ctx context.Context,
 	var (
 		foundRepos = make([]repodb.RepoMetadata, 0)
 		// pageFinder repodb.PageFinder
-		foundManifestMetadataMap = make(map[string]repodb.ManifestMetadata)
-		pageInfo                 repodb.PageInfo
+		foundManifestMetadataMap  = make(map[string]repodb.ManifestMetadata)
+		repoMetaAttributeIterator iterator.AttributesIterator
+		pageInfo                  repodb.PageInfo
 	)
 
-	// pageFinder, err := repodb.NewBaseRepoPageFinder(
-	// 	requestedPage.Limit,
-	// 	requestedPage.Offset,
-	// 	requestedPage.SortBy,
-	// )
-	// if err != nil {
-	// 	return nil, nil, pageInfo, err
-	// }
+	pageFinder, err := repodb.NewBaseRepoPageFinder(requestedPage.Limit, requestedPage.Offset, requestedPage.SortBy)
+	if err != nil {
+		return []repodb.RepoMetadata{}, map[string]repodb.ManifestMetadata{}, pageInfo, err
+	}
 
-	// err = dwr.db.View(func(tx *bolt.Tx) error {
-	// 	buck := tx.Bucket([]byte(repodb.RepoMetadataBucket))
+	repoMetaAttribute, err := repoMetaAttributeIterator.First(ctx)
+	if err != nil {
+		return []repodb.RepoMetadata{}, map[string]repodb.ManifestMetadata{}, pageInfo, err
+	}
 
-	// 	cursor := buck.Cursor()
+	for ; repoMetaAttribute != nil; repoMetaAttribute, err = repoMetaAttributeIterator.Next(ctx) {
+		if err != nil {
+			// log
+			return []repodb.RepoMetadata{}, map[string]repodb.ManifestMetadata{}, pageInfo, err
+		}
 
-	// 	for repoName, repoMetaBlob := cursor.First(); repoName != nil; repoName, repoMetaBlob = cursor.Next() {
-	// 		if ok, err := localCtx.RepoIsUserAvailable(ctx, string(repoName)); !ok || err != nil {
-	// 			continue
-	// 		}
+		var repoMeta repodb.RepoMetadata
 
-	// 		repoMeta := repodb.RepoMetadata{}
+		err := attributevalue.Unmarshal(repoMetaAttribute, &repoMeta)
+		if err != nil {
+			return []repodb.RepoMetadata{}, map[string]repodb.ManifestMetadata{}, pageInfo, err
+		}
 
-	// 		err := json.Unmarshal(repoMetaBlob, &repoMeta)
-	// 		if err != nil {
-	// 			return err
-	// 		}
+		if ok, err := localCtx.RepoIsUserAvailable(ctx, repoMeta.Name); !ok || err != nil {
+			continue
+		}
+		matchedTags := make(map[string]repodb.Descriptor)
 
-	// 		if filter(repoMeta) {
-	// 			pageFinder.Add(repodb.DetailedRepoMeta{
-	// 				RepoMeta: repoMeta,
-	// 			})
-	// 		}
-	// 	}
+		// take all manifestMetas
+		repoMeta.Tags = matchedTags
 
-	// 	foundRepos, pageInfo = pageFinder.Page()
+		pageFinder.Add(repodb.DetailedRepoMeta{
+			RepoMeta: repoMeta,
+		})
+	}
 
-	// 	return nil
-	// })
+	for idx := range foundRepos {
+		for _, manifestDigest := range foundRepos[idx].Tags {
+			manifestMeta, err := dwr.GetManifestMeta(
+				foundRepos[idx].Name, godigest.Digest(manifestDigest.Digest)) //nolint:contextcheck
+			if err != nil {
+				return nil, nil, pageInfo, err
+			}
 
-	// for idx := range foundRepos {
-	// 	for _, manifestDigest := range foundRepos[idx].Tags {
-	// 		manifestMeta, err := dwr.GetManifestMeta(godigest.Digest(manifestDigest))
-	// 		if err != nil {
-	// 			return nil, nil, pageInfo, err
-	// 		}
-
-	// 		foundManifestMetadataMap[manifestDigest] = manifestMeta
-	// 	}
-	// }
+			foundManifestMetadataMap[manifestDigest.Digest] = manifestMeta
+		}
+	}
 
 	return foundRepos, foundManifestMetadataMap, pageInfo, nil
 }

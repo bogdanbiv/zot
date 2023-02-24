@@ -1316,18 +1316,6 @@ func getAccessContext(ctx context.Context) localCtx.AccessControlContext {
 	}
 }
 
-// func filterRepos(acCtx localCtx.AccessControlContext, repoList []string) []string {
-// 	var availableRepos []string
-
-// 	for _, repoName := range repoList {
-// 		if acCtx.IsAdmin || matchesRepo(acCtx.GlobPatterns, repoName) {
-// 			availableRepos = append(availableRepos, repoName)
-// 		}
-// 	}
-
-// 	return availableRepos
-// }
-
 func filterReposMap(ctx context.Context, repoList []string) (map[string]bool, error) {
 	availableRepos := map[string]bool{}
 
