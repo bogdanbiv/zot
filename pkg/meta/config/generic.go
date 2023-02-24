@@ -11,8 +11,12 @@ type MetadataStoreConfig struct {
 }
 
 const (
-	UserMetadataLocalDriver = "local"
-	UserMetadataLocalFile   = "metadata_user"
+	UserMetadataLocalDriver  = "local"
+	UserMetadataDynamoDriver = "dynamo"
+	UserMetadataLocalFile    = "metadata_user"
+	StarredReposKey          = "starredReposKey"
+	BookmarkedReposKey       = "bookmarkedReposKey"
+	UserMetadataName         = "UserMetadataKey"
 )
 
 type UserState int
@@ -22,3 +26,16 @@ const (
 	Added
 	Removed
 )
+
+type UserStore interface {
+	GetStarredRepos(userid string) ([]string, error)
+	GetBookmarkedRepos(userid string) ([]string, error)
+	ToggleStarRepo(userid, reponame string) (UserState, error)
+	ToggleBookmarkRepo(userid, reponame string) (UserState, error)
+}
+
+type UserMetadata struct {
+	// data for each user.
+	StarredRepos    []string
+	BookmarkedRepos []string
+}

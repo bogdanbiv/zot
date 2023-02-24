@@ -268,7 +268,7 @@ func (c *Controller) CreateMetadataDatabaseDriver(cfg *config.Config,
 	var metastore meta.MetadataStore
 
 	if cfg.Extensions != nil && cfg.Extensions.Metadata != nil {
-		metastore, _ = meta.FactoryBaseMetaDB(*cfg.Extensions.Metadata, log)
+		metastore, _ = meta.Create(*cfg.Extensions.Metadata, log)
 	}
 
 	return &metastore
@@ -522,6 +522,19 @@ func (c *Controller) InitRepoDB(reloadCtx context.Context) error {
 	}
 
 	return nil
+}
+
+func CreateMetaDBDriver(storageConfig config.StorageConfig, log log.Logger) (repodb.RepoDB, error) {
+	if storageConfig.RemoteCache {
+		dynamoParams := getDynamoParams(storageConfig.CacheDriver, log)
+
+		return repodbfactory.Create("dynamodb", dynamoParams) //nolint:contextcheck
+	}
+
+	params := bolt.DBParameters{}
+	params.RootDir = storageConfig.RootDirectory
+
+	return repodbfactory.Create("boltdb", params) //nolint:contextcheck
 }
 
 func CreateRepoDBDriver(storageConfig config.StorageConfig, log log.Logger) (repodb.RepoDB, error) {

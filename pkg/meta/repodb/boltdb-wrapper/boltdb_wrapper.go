@@ -744,7 +744,6 @@ func (bdw DBWrapper) SearchRepos(ctx context.Context, searchText string, filter 
 	return foundRepos, foundManifestMetadataMap, pageInfo, err
 }
 
-// TODO: actually implement 2023-01-16
 func (bdw DBWrapper) FilterRepos(ctx context.Context,
 	filter repodb.FilterRepoFunc,
 	requestedPage repodb.PageInput,

@@ -1,4 +1,4 @@
-package userdb_test
+package userbolt_test
 
 import (
 	"context"
@@ -20,7 +20,8 @@ import (
 	"zotregistry.io/zot/pkg/api/constants"
 	extconf "zotregistry.io/zot/pkg/extensions/config"
 	msConfig "zotregistry.io/zot/pkg/meta/config"
-	userdb "zotregistry.io/zot/pkg/meta/userdb"
+	metaParams "zotregistry.io/zot/pkg/meta/params"
+	userbolt "zotregistry.io/zot/pkg/meta/userdb/boltdb-wrapper"
 	"zotregistry.io/zot/pkg/test"
 )
 
@@ -480,12 +481,11 @@ func TestUserConfigNegative(t *testing.T) {
 		srcConfig := config.New()
 		srcConfig.Storage.RootDirectory = t.TempDir()
 		sctlr := api.NewController(srcConfig)
-		enabled := false
-		mstore, err := userdb.FactoryUserMetadataStore(&msConfig.UserMetadataStoreConfig{
-			RootDir: srcConfig.Storage.RootDirectory,
-			Driver:  "local",
-			Enabled: &enabled,
-		}, sctlr.Log)
+
+		mstore, err := userbolt.NewBoltDBWrapper(
+			metaParams.DBDriverParameters{
+				RootDir: srcConfig.Storage.RootDirectory,
+			}, sctlr.Log)
 
 		So(mstore, ShouldNotBeNil)
 		So(err, ShouldBeNil)

@@ -19,7 +19,7 @@ func TestGetEmptyUser(t *testing.T) {
 		srcConfig.Storage.RootDirectory = t.TempDir()
 		sctlr := api.NewController(srcConfig)
 		enabled := true
-		mstore, err := meta.FactoryBaseMetaDB(msConfig.MetadataStoreConfig{
+		mstore, err := meta.Create(msConfig.MetadataStoreConfig{
 			User: &msConfig.UserMetadataStoreConfig{
 				RootDir: srcConfig.Storage.RootDirectory,
 				Driver:  "local",
@@ -64,7 +64,7 @@ func TestMetadataConfigNegative(t *testing.T) {
 		srcConfig.Storage.RootDirectory = t.TempDir()
 		sctlr := api.NewController(srcConfig)
 		enabled := true
-		mstore, err := meta.FactoryBaseMetaDB(msConfig.MetadataStoreConfig{
+		mstore, err := meta.Create(msConfig.MetadataStoreConfig{
 			User: &msConfig.UserMetadataStoreConfig{
 				RootDir: srcConfig.Storage.RootDirectory,
 				Driver:  "DOES_NOT_EXIST!",
@@ -98,7 +98,7 @@ func TestMetadataConfigNegative(t *testing.T) {
 		srcConfig.Storage.RootDirectory = "/proc/cannotbe/created"
 		sctlr := api.NewController(srcConfig)
 		enabled := true
-		mstore, err := meta.FactoryBaseMetaDB(msConfig.MetadataStoreConfig{
+		mstore, err := meta.Create(msConfig.MetadataStoreConfig{
 			User: &msConfig.UserMetadataStoreConfig{
 				RootDir: srcConfig.Storage.RootDirectory,
 				Driver:  "local",
