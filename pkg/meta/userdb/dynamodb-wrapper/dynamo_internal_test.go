@@ -14,7 +14,7 @@ import (
 
 	"zotregistry.io/zot/pkg/log" //nolint:go-staticcheck
 	"zotregistry.io/zot/pkg/meta/repodb/version"
-	// userdynamo "zotregistry.io/zot/pkg/meta/userdb/dynamodb-wrapper"
+	// userdynamo "zotregistry.io/zot/pkg/meta/userdb/dynamodb-wrapper".
 )
 
 func TestWrapperErrors(t *testing.T) {

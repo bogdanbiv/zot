@@ -404,8 +404,8 @@ func (rh *RouteHandler) GetManifest(response http.ResponseWriter, request *http.
 		return
 	}
 
-	if rh.c.RepoDB != nil {
-		err := repoDBUpdate.OnGetManifest(name, reference, digest, content, rh.c.StoreController, rh.c.RepoDB, rh.c.Log)
+	if rh.c.MetaStore.RepoDB != nil {
+		err := repoDBUpdate.OnGetManifest(name, reference, digest, content, rh.c.StoreController, rh.c.MetaStore.RepoDB, rh.c.Log)
 
 		if errors.Is(err, zerr.ErrOrphanSignature) {
 			rh.c.Log.Error().Err(err).Msgf("image is an orphan signature")
@@ -604,8 +604,8 @@ func (rh *RouteHandler) UpdateManifest(response http.ResponseWriter, request *ht
 		return
 	}
 
-	if rh.c.RepoDB != nil {
-		err := repoDBUpdate.OnUpdateManifest(name, reference, mediaType, digest, body, rh.c.StoreController, rh.c.RepoDB,
+	if rh.c.MetaStore.RepoDB != nil {
+		err := repoDBUpdate.OnUpdateManifest(name, reference, mediaType, digest, body, rh.c.StoreController, rh.c.MetaStore.RepoDB,
 			rh.c.Log)
 		if errors.Is(err, zerr.ErrOrphanSignature) {
 			rh.c.Log.Error().Err(err).Msgf("pushed image is an orphan signature")
@@ -703,9 +703,9 @@ func (rh *RouteHandler) DeleteManifest(response http.ResponseWriter, request *ht
 		return
 	}
 
-	if rh.c.RepoDB != nil {
+	if rh.c.MetaStore.RepoDB != nil {
 		err := repoDBUpdate.OnDeleteManifest(name, reference, mediaType, manifestDigest, manifestBlob,
-			rh.c.StoreController, rh.c.RepoDB, rh.c.Log)
+			rh.c.StoreController, rh.c.MetaStore.RepoDB, rh.c.Log)
 		if errors.Is(err, zerr.ErrOrphanSignature) {
 			rh.c.Log.Error().Err(err).Msgf("pushed image is an orphan signature")
 		} else if err != nil {

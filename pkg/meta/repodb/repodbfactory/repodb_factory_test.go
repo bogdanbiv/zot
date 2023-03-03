@@ -6,6 +6,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
+	zlog "zotregistry.io/zot/pkg/log"
 	bolt "zotregistry.io/zot/pkg/meta/repodb/boltdb-wrapper"
 	dynamoParams "zotregistry.io/zot/pkg/meta/repodb/dynamodb-wrapper/params"
 	"zotregistry.io/zot/pkg/meta/repodb/repodbfactory"
@@ -24,15 +25,20 @@ func TestCreateDynamo(t *testing.T) {
 			Region:                "us-east-2",
 		}
 
-		repoDB, err := repodbfactory.Create("dynamodb", dynamoDBDriverParams)
+		log := zlog.NewLogger("INFO", "stdout")
+		repoDB, err := repodbfactory.Create("dynamodb", dynamoDBDriverParams, log)
 		So(repoDB, ShouldNotBeNil)
 		So(err, ShouldBeNil)
 	})
 
 	Convey("Fails", t, func() {
-		So(func() { _, _ = repodbfactory.Create("dynamodb", bolt.DBParameters{RootDir: "root"}) }, ShouldPanic)
+		log := zlog.NewLogger("INFO", "stdout")
+		So(func() {
+			_, _ = repodbfactory.Create("dynamodb",
+				bolt.DBParameters{RootDir: "root"}, log)
+		}, ShouldPanic)
 
-		repoDB, err := repodbfactory.Create("random", bolt.DBParameters{RootDir: "root"})
+		repoDB, err := repodbfactory.Create("random", bolt.DBParameters{RootDir: "root"}, log)
 		So(repoDB, ShouldBeNil)
 		So(err, ShouldNotBeNil)
 	})
@@ -41,16 +47,20 @@ func TestCreateDynamo(t *testing.T) {
 func TestCreateBoltDB(t *testing.T) {
 	Convey("Create", t, func() {
 		rootDir := t.TempDir()
+		log := zlog.NewLogger("INFO", "stdout")
 
 		repoDB, err := repodbfactory.Create("boltdb", bolt.DBParameters{
 			RootDir: rootDir,
-		})
+		}, log)
 		So(repoDB, ShouldNotBeNil)
 		So(err, ShouldBeNil)
 	})
 
 	Convey("fails", t, func() {
-		So(func() { _, _ = repodbfactory.Create("boltdb", dynamoParams.DBDriverParameters{}) }, ShouldPanic)
+		log := zlog.NewLogger("INFO", "stdout")
+		So(func() {
+			_, _ = repodbfactory.Create("boltdb", dynamoParams.DBDriverParameters{}, log)
+		}, ShouldPanic)
 	})
 }
 

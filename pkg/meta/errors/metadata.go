@@ -11,4 +11,5 @@ var (
 	ErrInvalidOldUserBookmarkedRepos  = errors.New("invalid old entry for user bookmarked repos")
 	ErrCouldNotMarshalBookmarkedRepos = errors.New("could not repack entry for user bookmarked repos")
 	ErrInvalidUserBookmarkedRepos     = errors.New("invalid entry for user bookmarked repos")
+	ErrInvalidConfiguration           = errors.New("invalid metadata store configuration")
 )

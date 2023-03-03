@@ -16,7 +16,6 @@ import (
 
 	"zotregistry.io/zot/pkg/log"
 
-	zlog "zotregistry.io/zot/pkg/log"
 	metaParams "zotregistry.io/zot/pkg/meta/params"
 	"zotregistry.io/zot/pkg/meta/repodb/dynamodb-wrapper/iterator"
 	"zotregistry.io/zot/pkg/meta/userdb"
@@ -35,7 +34,7 @@ func TestIterator(t *testing.T) {
 	}
 
 	userMetaTablename := "UserMetadataTable" + uuid.String()
-	log := zlog.NewLogger("INFO", "stdout")
+	log := log.NewLogger("INFO", "stdout")
 
 	Convey("TestIterator", t, func() {
 		dynamoWrapper, err := userdynamo.NewDynamoDBWrapper(metaParams.DBDriverParameters{
@@ -74,7 +73,6 @@ func TestIterator(t *testing.T) {
 		attribute, err = repoMetaAttributeIterator.Next(context.Background())
 		So(err, ShouldBeNil)
 		So(attribute, ShouldNotBeNil)
-
 	})
 }
 
@@ -107,7 +105,8 @@ func TestIteratorErrors(t *testing.T) {
 }
 
 func setBadUserMeta(client *dynamodb.Client, userMetadataTableName string,
-	userName string, userMeta userdb.UserMetadata) error {
+	userName string, userMeta userdb.UserMetadata,
+) error {
 	userAttributeValue, err := attributevalue.Marshal("string")
 	if err != nil {
 		return err
@@ -133,8 +132,8 @@ func setBadUserMeta(client *dynamodb.Client, userMetadataTableName string,
 }
 
 func setUserMeta(client *dynamodb.Client, userMetadataTableName string,
-	userid string, userMeta userdb.UserMetadata) error {
-
+	userid string, userMeta userdb.UserMetadata,
+) error {
 	repoAttributeValue, err := attributevalue.Marshal(userMeta)
 	if err != nil {
 		return err

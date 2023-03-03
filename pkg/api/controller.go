@@ -26,10 +26,8 @@ import (
 	"zotregistry.io/zot/pkg/extensions/monitoring"
 	"zotregistry.io/zot/pkg/log"
 	"zotregistry.io/zot/pkg/meta" // MetadataStore   meta.MetadataStore
+	metaParams "zotregistry.io/zot/pkg/meta/params"
 	"zotregistry.io/zot/pkg/meta/repodb"
-	bolt "zotregistry.io/zot/pkg/meta/repodb/boltdb-wrapper"
-	dynamoParams "zotregistry.io/zot/pkg/meta/repodb/dynamodb-wrapper/params"
-	"zotregistry.io/zot/pkg/meta/repodb/repodbfactory"
 	"zotregistry.io/zot/pkg/scheduler"
 	"zotregistry.io/zot/pkg/storage"
 	"zotregistry.io/zot/pkg/storage/cache"
@@ -505,7 +503,7 @@ func CreateCacheDatabaseDriver(storageConfig config.StorageConfig, log log.Logge
 
 func (c *Controller) InitRepoDB(reloadCtx context.Context) error {
 	if c.Config.Extensions != nil && c.Config.Extensions.Search != nil && *c.Config.Extensions.Search.Enable {
-		driver, err := CreateRepoDBDriver(c.Config.Storage.StorageConfig, c.Log) //nolint:contextcheck
+		driver, err := CreateMetaDBDriver(c.Config.Storage.StorageConfig, c.Log) //nolint:contextcheck
 		if err != nil {
 			return err
 		}
@@ -526,33 +524,21 @@ func (c *Controller) InitRepoDB(reloadCtx context.Context) error {
 	return nil
 }
 
-func CreateMetaDBDriver(storageConfig config.StorageConfig, log log.Logger) (repodb.RepoDB, error) {
-	if storageConfig.RemoteCache {
-		dynamoParams := getDynamoParams(storageConfig.CacheDriver, log)
+func CreateMetaDBDriver(storageConfig config.StorageConfig,
+	log log.Logger) (meta.MetadataStore, error) {
+	params := getParams(storageConfig.RootDirectory,
+		storageConfig.CacheDriver, log)
 
-		return repodbfactory.Create("dynamodb", dynamoParams) //nolint:contextcheck
+	var dbdriver = "boltdb"
+	if storageConfig.RemoteCache {
+		dbdriver = "dynamodb"
 	}
 
-	params := bolt.DBParameters{}
-	params.RootDir = storageConfig.RootDirectory
-
-	return repodbfactory.Create("boltdb", params) //nolint:contextcheck
+	return meta.Create(dbdriver, params, log) //nolint:contextcheck
 }
 
-func CreateRepoDBDriver(storageConfig config.StorageConfig, log log.Logger) (repodb.RepoDB, error) {
-	if storageConfig.RemoteCache {
-		dynamoParams := getDynamoParams(storageConfig.CacheDriver, log)
-
-		return repodbfactory.Create("dynamodb", dynamoParams) //nolint:contextcheck
-	}
-
-	params := bolt.DBParameters{}
-	params.RootDir = storageConfig.RootDirectory
-
-	return repodbfactory.Create("boltdb", params) //nolint:contextcheck
-}
-
-func getDynamoParams(cacheDriverConfig map[string]interface{}, log log.Logger) dynamoParams.DBDriverParameters {
+func getParams(rootDir string, cacheDriverConfig map[string]interface{},
+	log log.Logger) metaParams.DBDriverParameters {
 	allParametersOk := true
 
 	endpoint, ok := toStringIfOk(cacheDriverConfig, "endpoint", log)
@@ -573,21 +559,27 @@ func getDynamoParams(cacheDriverConfig map[string]interface{}, log log.Logger) d
 	versionTablename, ok := toStringIfOk(cacheDriverConfig, "versiontablename", log)
 	allParametersOk = allParametersOk && ok
 
+	userMetaTablename, ok := toStringIfOk(cacheDriverConfig, "usermetatablename", log)
+	allParametersOk = allParametersOk && ok
+
 	if !allParametersOk {
 		panic("dynamo parameters are not specified correctly, can't proceede")
 	}
 
-	return dynamoParams.DBDriverParameters{
+	return metaParams.DBDriverParameters{
+		RootDir:               rootDir,
 		Endpoint:              endpoint,
 		Region:                region,
 		RepoMetaTablename:     repoMetaTablename,
 		ManifestDataTablename: manifestDataTablename,
 		IndexDataTablename:    indexDataTablename,
 		VersionTablename:      versionTablename,
+		UserMetaTablename:     userMetaTablename,
 	}
 }
 
-func toStringIfOk(cacheDriverConfig map[string]interface{}, param string, log log.Logger) (string, bool) {
+func toStringIfOk(cacheDriverConfig map[string]interface{}, param string,
+	log log.Logger) (string, bool) {
 	val, ok := cacheDriverConfig[param]
 
 	if !ok {

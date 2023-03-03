@@ -162,9 +162,11 @@ func TestGetExistingUser(t *testing.T) {
 			*srcConfig.Extensions.Metadata.User.Enabled = false
 			sctlr := api.NewController(srcConfig)
 			So(sctlr, ShouldNotBeNil)
-			sctlr.MetaStore = sctlr.CreateMetadataDatabaseDriver(srcConfig, sctlr.Log)
+			meta, err := api.CreateMetaDBDriver(srcConfig.Storage.StorageConfig, sctlr.Log)
+			So(err, ShouldNotBeNil)
+			sctlr.MetaStore = &meta
 			So(sctlr.MetaStore, ShouldNotBeNil)
-			_, err := os.Stat("users.db")
+			_, err = os.Stat("users.db")
 			So(err, ShouldNotBeNil)
 		})
 
@@ -172,9 +174,10 @@ func TestGetExistingUser(t *testing.T) {
 			t.Helper()
 			sctlr := api.NewController(srcConfig)
 			So(sctlr, ShouldNotBeNil)
-			sctlr.MetaStore = sctlr.CreateMetadataDatabaseDriver(srcConfig, sctlr.Log)
-			So(sctlr.MetaStore, ShouldNotBeNil)
-			_, err := os.Stat(path.Join(srcConfig.Extensions.Metadata.User.RootDir, "users.db"))
+			meta, err := api.CreateMetaDBDriver(srcConfig.Storage.StorageConfig, sctlr.Log)
+			So(err, ShouldNotBeNil)
+			sctlr.MetaStore = &meta
+			_, err = os.Stat(path.Join(srcConfig.Extensions.Metadata.User.RootDir, "users.db"))
 			So(err, ShouldNotBeNil)
 
 			simulatedUser := "test"

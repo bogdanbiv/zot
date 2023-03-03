@@ -2,13 +2,14 @@ package repodbfactory
 
 import (
 	"zotregistry.io/zot/errors"
+	zlog "zotregistry.io/zot/pkg/log"
 	"zotregistry.io/zot/pkg/meta/repodb"
 	boltdb_wrapper "zotregistry.io/zot/pkg/meta/repodb/boltdb-wrapper"
 	dynamodb_wrapper "zotregistry.io/zot/pkg/meta/repodb/dynamodb-wrapper"
 	dynamoParams "zotregistry.io/zot/pkg/meta/repodb/dynamodb-wrapper/params"
 )
 
-func Create(dbtype string, parameters interface{}) (repodb.RepoDB, error) { //nolint:contextcheck
+func Create(dbtype string, parameters interface{}, log zlog.Logger) (repodb.RepoDB, error) { //nolint:contextcheck
 	switch dbtype {
 	case "boltdb":
 		{

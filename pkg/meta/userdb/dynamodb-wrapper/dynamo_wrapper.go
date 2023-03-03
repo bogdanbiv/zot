@@ -2,8 +2,6 @@ package userdynamo
 
 import (
 	"context"
-	// "encoding/json"
-
 	"strings"
 	"time"
 
@@ -12,42 +10,27 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-
-	// godigest "github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 
 	zerr "zotregistry.io/zot/errors"
 	mcommon "zotregistry.io/zot/pkg/common"
 	zlog "zotregistry.io/zot/pkg/log"
-
-	// "zotregistry.io/zot/pkg/meta/repodb" //nolint:go-staticcheck
-	// "zotregistry.io/zot/pkg/meta/repodb/common"
-	// "zotregistry.io/zot/pkg/meta/repodb/dynamodb-wrapper/iterator"
+	msConfig "zotregistry.io/zot/pkg/meta/config"
 	metaParams "zotregistry.io/zot/pkg/meta/params"
 	"zotregistry.io/zot/pkg/meta/repodb/version"
 	"zotregistry.io/zot/pkg/meta/userdb"
-
-	// localCtx "zotregistry.io/zot/pkg/requestcontext"
-
-	// zlog "zotregistry.io/zot/pkg/log"
-	msConfig "zotregistry.io/zot/pkg/meta/config"
-	// merrors "zotregistry.io/zot/pkg/meta/errors"
 )
 
 type DBWrapper struct {
-	Client *dynamodb.Client
-	// StarsMetaTablename    string
-	// BooksMetaTablename    string
+	Client            *dynamodb.Client
 	UserMetaTablename string
-	// RepoMetaTablename string
-	// // ManifestDataTablename string
-	VersionTablename string
-	Patches          []func(client *dynamodb.Client, tableNames map[string]string) error
-	Log              zlog.Logger
+	VersionTablename  string
+	Patches           []func(client *dynamodb.Client, tableNames map[string]string) error
+	Log               zlog.Logger
 }
 
 func NewDynamoDBWrapper(params metaParams.DBDriverParameters, log zlog.Logger) (*DBWrapper, error) {
-	// custom endpoint resolver to point to localhost
+	// custom endpoint resolver to point to localhost.
 	customResolver := aws.EndpointResolverWithOptionsFunc(
 		func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 			return aws.Endpoint{
@@ -59,7 +42,7 @@ func NewDynamoDBWrapper(params metaParams.DBDriverParameters, log zlog.Logger) (
 
 	// Using the SDK's default configuration, loading additional config
 	// and credentials values from the environment variables, shared
-	// credentials, and shared configuration files
+	// credentials, and shared configuration files.
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(params.Region),
 		config.WithEndpointResolverWithOptions(customResolver))
 	if err != nil {
@@ -67,13 +50,11 @@ func NewDynamoDBWrapper(params metaParams.DBDriverParameters, log zlog.Logger) (
 	}
 
 	dynamoWrapper := DBWrapper{
-		Client: dynamodb.NewFromConfig(cfg),
-		// RepoMetaTablename: params.RepoMetaTablename,
+		Client:            dynamodb.NewFromConfig(cfg),
 		UserMetaTablename: params.UserMetaTablename,
-		// ManifestDataTablename: params.ManifestDataTablename,
-		VersionTablename: params.VersionTablename,
-		Patches:          version.GetDynamoDBPatches(),
-		Log:              log,
+		VersionTablename:  params.VersionTablename,
+		Patches:           version.GetDynamoDBPatches(),
+		Log:               log,
 	}
 
 	err = dynamoWrapper.createVersionTable()
@@ -86,25 +67,27 @@ func NewDynamoDBWrapper(params metaParams.DBDriverParameters, log zlog.Logger) (
 		return nil, err
 	}
 
-	// Using the Config value, create the DynamoDB client
+	// Using the Config value, create the DynamoDB client.
 	return &dynamoWrapper, nil
 }
 
 func (dwr *DBWrapper) ToggleBookmarkRepo(userid, reponame string) ( //nolint:dupl
 	msConfig.UserState, error,
 ) {
-	var res msConfig.UserState = msConfig.NotChanged
+	res := msConfig.NotChanged
 	userMeta, err := dwr.GetUserMeta(reponame)
+
 	if err != nil {
 		return res, err
 	}
 
 	if !mcommon.Contains(userMeta.BookmarkedRepos, reponame) {
 		res = msConfig.Added
+
 		userMeta.BookmarkedRepos = append(userMeta.BookmarkedRepos, reponame)
 	} else {
-		userMeta.BookmarkedRepos = mcommon.RemoveFrom(userMeta.BookmarkedRepos, reponame)
 		res = msConfig.Removed
+		userMeta.BookmarkedRepos = mcommon.RemoveFrom(userMeta.BookmarkedRepos, reponame)
 	}
 
 	if res != msConfig.NotChanged {
@@ -113,6 +96,7 @@ func (dwr *DBWrapper) ToggleBookmarkRepo(userid, reponame string) ( //nolint:dup
 
 	if err != nil {
 		res = msConfig.NotChanged
+
 		return res, err
 	}
 
@@ -137,18 +121,20 @@ func (dwr *DBWrapper) GetBookmarkedRepos(userid string) ([]string, error) {
 func (dwr *DBWrapper) ToggleStarRepo(userid, reponame string) ( //nolint:dupl
 	msConfig.UserState, error,
 ) {
-	var res msConfig.UserState = msConfig.NotChanged
+	res := msConfig.NotChanged
 	userMeta, err := dwr.GetUserMeta(reponame)
+
 	if err != nil {
 		return res, err
 	}
 
 	if !mcommon.Contains(userMeta.StarredRepos, reponame) {
 		res = msConfig.Added
+
 		userMeta.StarredRepos = append(userMeta.StarredRepos, reponame)
 	} else {
-		userMeta.StarredRepos = mcommon.RemoveFrom(userMeta.StarredRepos, reponame)
 		res = msConfig.Removed
+		userMeta.StarredRepos = mcommon.RemoveFrom(userMeta.StarredRepos, reponame)
 	}
 
 	if res != msConfig.NotChanged {
@@ -157,6 +143,7 @@ func (dwr *DBWrapper) ToggleStarRepo(userid, reponame string) ( //nolint:dupl
 
 	if err != nil {
 		res = msConfig.NotChanged
+
 		return res, err
 	}
 

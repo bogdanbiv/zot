@@ -229,7 +229,7 @@ func TestCreateRepoDBDriver(t *testing.T) {
 			"manifestdatatablename": "ManifestDataTable",
 		}
 
-		testFunc := func() { _, _ = api.CreateRepoDBDriver(conf.Storage.StorageConfig, log) }
+		testFunc := func() { _, _ = api.CreateMetaDBDriver(conf.Storage.StorageConfig, log) }
 		So(testFunc, ShouldPanic)
 
 		conf.Storage.CacheDriver = map[string]interface{}{
@@ -242,7 +242,7 @@ func TestCreateRepoDBDriver(t *testing.T) {
 			"versiontablename":      1,
 		}
 
-		testFunc = func() { _, _ = api.CreateRepoDBDriver(conf.Storage.StorageConfig, log) }
+		testFunc = func() { _, _ = api.CreateMetaDBDriver(conf.Storage.StorageConfig, log) }
 		So(testFunc, ShouldPanic)
 	})
 }

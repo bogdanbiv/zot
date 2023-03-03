@@ -7,25 +7,29 @@ import (
 
 	"zotregistry.io/zot/pkg/api"
 	"zotregistry.io/zot/pkg/api/config"
+	zlog "zotregistry.io/zot/pkg/log"
 	"zotregistry.io/zot/pkg/meta"
-	msConfig "zotregistry.io/zot/pkg/meta/config"
+	metaParams "zotregistry.io/zot/pkg/meta/params"
 )
 
 func TestGetEmptyUser(t *testing.T) {
 	Convey("Retrieve starred repos for empty user", t, func() {
 		t.Helper()
 
+		log := zlog.NewLogger("INFO", "stdout")
 		srcConfig := config.New()
 		srcConfig.Storage.RootDirectory = t.TempDir()
 		sctlr := api.NewController(srcConfig)
-		enabled := true
-		mstore, err := meta.Create(msConfig.MetadataStoreConfig{
-			User: &msConfig.UserMetadataStoreConfig{
-				RootDir: srcConfig.Storage.RootDirectory,
-				Driver:  "local",
-				Enabled: &enabled,
-			},
-		}, sctlr.Log)
+
+		mstore, err := meta.Create("boltdb", metaParams.DBDriverParameters{
+			RootDir:               "rootDir",
+			Endpoint:              "endpoint",
+			Region:                "region",
+			RepoMetaTablename:     "repoMetaTablename",
+			ManifestDataTablename: "manifestDataTablename",
+			VersionTablename:      "versionTablename",
+			UserMetaTablename:     "userMetaTablename",
+		}, log)
 
 		sctlr.MetaStore = &mstore
 		So(err, ShouldBeNil)
@@ -60,17 +64,20 @@ func TestMetadataConfigNegative(t *testing.T) {
 	Convey("Cannot create User metadata - config driver does not exist", t, func() {
 		t.Helper()
 
+		log := zlog.NewLogger("INFO", "stdout")
 		srcConfig := config.New()
 		srcConfig.Storage.RootDirectory = t.TempDir()
 		sctlr := api.NewController(srcConfig)
-		enabled := true
-		mstore, err := meta.Create(msConfig.MetadataStoreConfig{
-			User: &msConfig.UserMetadataStoreConfig{
-				RootDir: srcConfig.Storage.RootDirectory,
-				Driver:  "DOES_NOT_EXIST!",
-				Enabled: &enabled,
-			},
-		}, sctlr.Log)
+
+		mstore, err := meta.Create("fgdgd", metaParams.DBDriverParameters{
+			RootDir:               "rootDir",
+			Endpoint:              "endpoint",
+			Region:                "region",
+			RepoMetaTablename:     "repoMetaTablename",
+			ManifestDataTablename: "manifestDataTablename",
+			VersionTablename:      "versionTablename",
+			UserMetaTablename:     "userMetaTablename",
+		}, log)
 
 		sctlr.MetaStore = &mstore
 		So(err, ShouldBeNil)
@@ -94,17 +101,20 @@ func TestMetadataConfigNegative(t *testing.T) {
 	Convey("Cannot create User metadata - no permission to write data to config dir", t, func() {
 		t.Helper()
 
+		log := zlog.NewLogger("INFO", "stdout")
 		srcConfig := config.New()
 		srcConfig.Storage.RootDirectory = "/proc/cannotbe/created"
 		sctlr := api.NewController(srcConfig)
-		enabled := true
-		mstore, err := meta.Create(msConfig.MetadataStoreConfig{
-			User: &msConfig.UserMetadataStoreConfig{
-				RootDir: srcConfig.Storage.RootDirectory,
-				Driver:  "local",
-				Enabled: &enabled,
-			},
-		}, sctlr.Log)
+
+		mstore, err := meta.Create("boltdb", metaParams.DBDriverParameters{
+			RootDir:               "rootDir",
+			Endpoint:              "endpoint",
+			Region:                "region",
+			RepoMetaTablename:     "repoMetaTablename",
+			ManifestDataTablename: "manifestDataTablename",
+			VersionTablename:      "versionTablename",
+			UserMetaTablename:     "userMetaTablename",
+		}, log)
 
 		sctlr.MetaStore = &mstore
 		So(err, ShouldNotBeNil)
