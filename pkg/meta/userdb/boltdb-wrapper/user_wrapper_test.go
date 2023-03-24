@@ -3,6 +3,7 @@ package userbolt_test
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/url"
 	"os"
@@ -147,21 +148,22 @@ func getCredString(username, password string) string {
 
 func TestGetExistingUser(t *testing.T) {
 	Convey("Create User metadata DB", t, func(c C) {
-		srcConfig := config.New()
-		srcConfig.Extensions = &extconf.ExtensionConfig{}
-		enable := true
-		srcConfig.Extensions.Metadata = &msConfig.MetadataStoreConfig{
-			User: &msConfig.UserMetadataStoreConfig{
-				RootDir: t.TempDir(),
-				Driver:  "local",
-				Enabled: &enable,
-			},
+		params := metaParams.DBDriverParameters{
+			RootDir: "",
 		}
+		
+		metauser := NewBoltDBWrapper(params, log)
 
 		Convey("Default metadata settings", func(c C) {
-			*srcConfig.Extensions.Metadata.User.Enabled = false
 			sctlr := api.NewController(srcConfig)
 			So(sctlr, ShouldNotBeNil)
+			logFile, err := os.CreateTemp(t.TempDir(), "zot-log*.txt")
+			So(err, ShouldBeNil)
+			logPath := logFile.Name()
+			defer os.Remove(logPath)
+	
+			writers := io.MultiWriter(os.Stdout, logFile)
+			sctlr.Log.Logger = sctlr.Log.Output(writers)
 			meta, err := api.CreateMetaDBDriver(srcConfig.Storage.StorageConfig, sctlr.Log)
 			So(err, ShouldNotBeNil)
 			sctlr.MetaStore = &meta
@@ -177,6 +179,7 @@ func TestGetExistingUser(t *testing.T) {
 			meta, err := api.CreateMetaDBDriver(srcConfig.Storage.StorageConfig, sctlr.Log)
 			So(err, ShouldNotBeNil)
 			sctlr.MetaStore = &meta
+			
 			_, err = os.Stat(path.Join(srcConfig.Extensions.Metadata.User.RootDir, "users.db"))
 			So(err, ShouldNotBeNil)
 

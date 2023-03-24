@@ -11,7 +11,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.6.0
 	github.com/briandowns/spinner v1.23.0
 	github.com/chartmuseum/auth v0.5.0
-	github.com/containers/common v0.48.1
+	github.com/containers/common v0.50.1
 	github.com/didip/tollbooth/v6 v6.1.2
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/dustin/go-humanize v1.0.1
@@ -57,7 +57,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/notaryproject/notation-go v1.0.0-rc.3
 	github.com/opencontainers/distribution-spec/specs-go v0.0.0-20230117141039-067a0f5b0e25
-	github.com/sigstore/cosign v1.5.2
+	github.com/sigstore/cosign v1.13.1
 	github.com/swaggo/http-swagger v1.3.3
 	oras.land/oras-go/v2 v2.0.0
 )
@@ -71,7 +71,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/Microsoft/hcsshim v0.9.6 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect
-	github.com/aquasecurity/defsec v0.82.4 // indirect
+	github.com/aquasecurity/defsec v0.82.7-0.20221229120130-2bc18528da1c // indirect
 	github.com/aquasecurity/memoryfs v1.4.4 // indirect
 	github.com/aquasecurity/table v1.8.0 // indirect
 	github.com/aquasecurity/tml v0.6.1 // indirect
@@ -157,7 +157,6 @@ require (
 	modernc.org/sqlite v1.17.3 // indirect
 	modernc.org/strutil v1.1.1 // indirect
 	modernc.org/token v1.0.0 // indirect
-	mvdan.cc/gofumpt v0.4.0 // indirect
 	oras.land/oras-go v1.2.0 // indirect
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
@@ -399,9 +398,9 @@ require (
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
-	github.com/sigstore/fulcio v0.4.1 // indirect
-	github.com/sigstore/rekor v0.7.0 // indirect
-	github.com/sigstore/sigstore v1.2.1-0.20220512194100-3ed986cc9758 // indirect
+	github.com/sigstore/fulcio v0.6.0 // indirect
+	github.com/sigstore/rekor v1.0.1 // indirect
+	github.com/sigstore/sigstore v1.4.4 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/smartystreets/assertions v1.2.0 // indirect

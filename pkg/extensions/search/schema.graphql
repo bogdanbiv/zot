@@ -185,6 +185,7 @@ type ImageSummary {
     """
     Vulnerabilities: ImageVulnerabilitySummary
 }
+
 """
 Details about a specific version of an image for a certain operating system and architecture.
 """

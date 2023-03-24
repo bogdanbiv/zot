@@ -18,6 +18,7 @@ import (
 	cveinfo "zotregistry.io/zot/pkg/extensions/search/cve"
 	"zotregistry.io/zot/pkg/extensions/search/gql_generated"
 	"zotregistry.io/zot/pkg/log"
+	"zotregistry.io/zot/pkg/meta"
 	"zotregistry.io/zot/pkg/meta/repodb"
 	"zotregistry.io/zot/pkg/scheduler"
 	"zotregistry.io/zot/pkg/storage"
@@ -161,12 +162,12 @@ func addSearchSecurityHeaders(h http.Handler) http.HandlerFunc { //nolint:varnam
 
 func SetupSearchRoutes(config *config.Config, router *mux.Router,
 	storeController storage.StoreController,
-	repoDB repodb.RepoDB, cveInfo CveInfo, log log.Logger,
+	metad meta.MetadataStore, cveInfo CveInfo, log log.Logger,
 ) {
 	log.Info().Msg("setting up search routes")
 
 	if config.Extensions.Search != nil && *config.Extensions.Search.Enable {
-		resConfig := search.GetResolverConfig(log, storeController, repoDB, cveInfo)
+		resConfig := search.GetResolverConfig(log, storeController, metad.RepoDB, cveInfo, *(metad.UserStore))
 
 		extRouter := router.PathPrefix(constants.ExtSearchPrefix).Subrouter()
 		extRouter.Methods("GET", "POST", "OPTIONS").
